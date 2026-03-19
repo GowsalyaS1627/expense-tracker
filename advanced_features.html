@@ -1,0 +1,231 @@
+<!-- Add these sections to index.html -->
+
+<!-- SMS Parser Page -->
+<section id="sms-page" class="hidden fixed inset-0 z-[100] p-6 overflow-y-auto" style="background: linear-gradient(135deg, #000000 0%, #1a1a2e 50%, #0f0f1e 100%);">
+    <div class="flex items-center justify-between mb-10">
+        <button onclick="showPage('dashboard-page')" class="w-10 h-10 flex items-center justify-center rounded-xl" style="background: linear-gradient(145deg, #1a1a2e, #16213e); border: 1px solid rgba(255,255,255,0.05);">
+            <span class="material-icons text-white text-sm">arrow_back_ios_new</span>
+        </button>
+        <h2 class="text-xl font-bold gradient-text tracking-tight">SMS Parser</h2>
+        <div class="w-10"></div>
+    </div>
+
+    <div class="max-w-md mx-auto space-y-5">
+        <div class="card p-5">
+            <p class="text-xs text-slate-400 mb-3">Paste your bank SMS below:</p>
+            <textarea id="sms-input" rows="6" placeholder="Example: Your A/c XX1234 debited Rs.500 at SWIGGY on 15-Jan-24" class="w-full p-4 rounded-xl bg-gray-800 border border-gray-700 text-white outline-none text-sm"></textarea>
+        </div>
+
+        <button onclick="parseSMS()" id="parse-btn" class="w-full p-5 rounded-2xl font-bold text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <span id="parse-text">Parse & Add Transaction</span>
+            <span id="parse-loader" class="loader hidden"></span>
+        </button>
+
+        <div id="parsed-result" class="hidden card p-5">
+            <h3 class="text-white font-bold mb-3">Parsed Details:</h3>
+            <div class="space-y-2 text-sm">
+                <p class="text-slate-300"><span class="text-slate-500">Amount:</span> <span id="parsed-amt" class="font-bold text-blue-400"></span></p>
+                <p class="text-slate-300"><span class="text-slate-500">Type:</span> <span id="parsed-type" class="font-bold"></span></p>
+                <p class="text-slate-300"><span class="text-slate-500">Category:</span> <span id="parsed-cat" class="font-bold"></span></p>
+                <p class="text-slate-300"><span class="text-slate-500">Note:</span> <span id="parsed-note" class="font-bold"></span></p>
+            </div>
+        </div>
+
+        <div class="card p-4">
+            <p class="text-xs text-slate-400">
+                <span class="material-icons text-xs mr-1" style="vertical-align: middle;">info</span>
+                Supports most Indian bank SMS formats. Works with debit, credit, UPI transactions.
+            </p>
+        </div>
+    </div>
+</section>
+
+<!-- Add to Dashboard - Predictions Card (add after AI Insights) -->
+<div id="predictions-section" class="card">
+    <div class="flex items-center justify-between mb-3">
+        <h3 class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Next Month Prediction</h3>
+        <span class="material-icons text-purple-400 text-sm">trending_up</span>
+    </div>
+    <div class="p-4 rounded-xl" style="background: linear-gradient(145deg, rgba(168, 85, 247, 0.1), rgba(147, 51, 234, 0.05)); border: 1px solid rgba(168, 85, 247, 0.2);">
+        <p class="text-xs text-slate-400 mb-2">Based on last 3 months</p>
+        <h2 id="predicted-amount" class="text-3xl font-bold text-purple-300">₹0</h2>
+        <p id="prediction-trend" class="text-xs text-slate-400 mt-2"></p>
+    </div>
+</div>
+
+<!-- Add to Dashboard - Streaks Card (add after predictions) -->
+<div id="streaks-section" class="card">
+    <div class="flex items-center justify-between mb-3">
+        <h3 class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Spending Streak</h3>
+        <span class="material-icons text-orange-400 text-sm">local_fire_department</span>
+    </div>
+    <div class="grid grid-cols-2 gap-3">
+        <div class="p-4 rounded-xl text-center" style="background: linear-gradient(145deg, rgba(245, 158, 11, 0.1), rgba(217, 119, 6, 0.05)); border: 1px solid rgba(245, 158, 11, 0.2);">
+            <p class="text-xs text-slate-400 mb-1">Current Streak</p>
+            <h3 id="current-streak" class="text-2xl font-bold text-orange-300">0</h3>
+            <p class="text-xs text-slate-500 mt-1">days 🔥</p>
+        </div>
+        <div class="p-4 rounded-xl text-center" style="background: linear-gradient(145deg, rgba(16, 185, 129, 0.1), rgba(5, 150, 105, 0.05)); border: 1px solid rgba(16, 185, 129, 0.2);">
+            <p class="text-xs text-slate-400 mb-1">Best Streak</p>
+            <h3 id="best-streak" class="text-2xl font-bold text-emerald-300">0</h3>
+            <p class="text-xs text-slate-500 mt-1">days 🏆</p>
+        </div>
+    </div>
+    <p id="streak-message" class="text-xs text-center text-slate-400 mt-3"></p>
+</div>
+
+<!-- JavaScript Functions -->
+<script>
+// Predictions
+async function loadPredictions() {
+    try {
+        const response = await fetch(`/get_predictions/${currentUserEmail}`);
+        if (response.ok) {
+            const data = await response.json();
+            document.getElementById('predicted-amount').innerText = `₹${data.predicted_amount}`;
+            
+            let trendText = '';
+            if (data.trend === 'increasing') {
+                trendText = `📈 Trending up from ₹${data.avg_last_3_months} avg`;
+            } else if (data.trend === 'decreasing') {
+                trendText = `📉 Trending down from ₹${data.avg_last_3_months} avg`;
+            } else {
+                trendText = `➡️ Stable at ₹${data.avg_last_3_months} avg`;
+            }
+            document.getElementById('prediction-trend').innerText = trendText;
+        }
+    } catch (err) {
+        console.log("Error loading predictions");
+    }
+}
+
+// Streaks
+async function loadStreaks() {
+    try {
+        const response = await fetch(`/get_streaks/${currentUserEmail}`);
+        if (response.ok) {
+            const data = await response.json();
+            document.getElementById('current-streak').innerText = data.current_streak;
+            document.getElementById('best-streak').innerText = data.best_streak;
+            
+            let message = '';
+            if (data.current_streak >= 7) {
+                message = '🎉 Amazing! Keep it up!';
+            } else if (data.current_streak >= 3) {
+                message = '💪 Great progress!';
+            } else if (data.current_streak > 0) {
+                message = '👍 Good start!';
+            } else {
+                message = `Stay under ₹${data.daily_budget}/day to start streak`;
+            }
+            document.getElementById('streak-message').innerText = message;
+        }
+    } catch (err) {
+        console.log("Error loading streaks");
+    }
+}
+
+// PDF Download
+function downloadPDF() {
+    if (!currentUserEmail) { showToast('Please login first!', 'error'); return; }
+    window.location.href = `/generate_pdf/${currentUserEmail}`;
+    showToast('Generating PDF report...', 'success');
+}
+
+// SMS Parser
+async function parseSMS() {
+    const smsText = document.getElementById('sms-input').value;
+    if (!smsText) { showToast('Enter SMS text!', 'error'); return; }
+
+    const parseBtn = document.getElementById('parse-btn');
+    const parseText = document.getElementById('parse-text');
+    const parseLoader = document.getElementById('parse-loader');
+
+    parseBtn.disabled = true;
+    parseText.classList.add('hidden');
+    parseLoader.classList.remove('hidden');
+
+    try {
+        const response = await fetch('/parse_sms', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user: currentUserEmail, sms_text: smsText })
+        });
+
+        const data = await response.json();
+
+        if (data.status === 'success') {
+            document.getElementById('parsed-amt').innerText = `₹${data.amount}`;
+            document.getElementById('parsed-type').innerText = data.type;
+            document.getElementById('parsed-cat').innerText = data.category;
+            document.getElementById('parsed-note').innerText = data.note;
+            document.getElementById('parsed-result').classList.remove('hidden');
+            
+            showToast('Transaction added successfully!', 'success');
+            document.getElementById('sms-input').value = '';
+            
+            setTimeout(() => {
+                showPage('dashboard-page');
+                loadDataFromDB().then(() => refreshDashboard());
+            }, 2000);
+        } else {
+            showToast(data.message, 'error');
+        }
+    } catch (err) {
+        showToast('Error parsing SMS', 'error');
+    } finally {
+        parseBtn.disabled = false;
+        parseText.classList.remove('hidden');
+        parseLoader.classList.add('hidden');
+    }
+}
+
+// Update showPage to load new features
+const originalShowPage2 = showPage;
+showPage = function(id) {
+    originalShowPage2(id);
+    if (id === 'dashboard-page') {
+        loadPredictions();
+        loadStreaks();
+    }
+};
+
+// Add these sections to dashboard dynamically
+function addNewSectionsToDashboard() {
+    const main = document.querySelector('#dashboard-page main');
+    
+    // Add predictions after AI insights
+    const predictionsDiv = document.createElement('div');
+    predictionsDiv.innerHTML = document.getElementById('predictions-section').outerHTML;
+    main.insertBefore(predictionsDiv.firstElementChild, main.children[3]);
+    
+    // Add streaks after predictions
+    const streaksDiv = document.createElement('div');
+    streaksDiv.innerHTML = document.getElementById('streaks-section').outerHTML;
+    main.insertBefore(streaksDiv.firstElementChild, main.children[4]);
+}
+
+// Call on page load
+window.addEventListener('load', () => {
+    if (document.getElementById('predictions-section')) {
+        addNewSectionsToDashboard();
+    }
+});
+</script>
+
+<!-- Add SMS Parser button to dashboard (add with other floating buttons) -->
+<button onclick="showPage('sms-page')" class="fixed bottom-10 left-6 w-14 h-14 rounded-2xl shadow-2xl flex items-center justify-center z-50" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); box-shadow: 0 10px 40px rgba(139, 92, 246, 0.5); margin-bottom: 150px;">
+    <span class="material-icons text-2xl">sms</span>
+</button>
+
+<!-- Add PDF Download button to add-page (replace existing download button) -->
+<div class="grid grid-cols-2 gap-3 mt-4">
+    <button onclick="downloadCSV()" class="flex items-center justify-center gap-2 p-4 rounded-2xl transition-all group" style="background: linear-gradient(145deg, #1a1a2e, #16213e); border: 1px solid rgba(255,255,255,0.05);">
+        <span class="material-icons text-blue-400 group-hover:scale-110 transition-transform">file_download</span>
+        <span class="text-[10px] font-black text-slate-400 group-hover:text-blue-400 uppercase tracking-widest">CSV</span>
+    </button>
+    <button onclick="downloadPDF()" class="flex items-center justify-center gap-2 p-4 rounded-2xl transition-all group" style="background: linear-gradient(145deg, #1a1a2e, #16213e); border: 1px solid rgba(255,255,255,0.05);">
+        <span class="material-icons text-rose-400 group-hover:scale-110 transition-transform">picture_as_pdf</span>
+        <span class="text-[10px] font-black text-slate-400 group-hover:text-rose-400 uppercase tracking-widest">PDF</span>
+    </button>
+</div>

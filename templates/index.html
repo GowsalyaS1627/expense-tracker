@@ -1,0 +1,1974 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpendWise Pro | Gradient Edition</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        body { -webkit-tap-highlight-color: transparent; font-family: 'Inter', sans-serif; background: #f1f5f9; min-height: 100vh; color: #1e293b; }
+        .hidden { display: none !important; }
+        .card { background: #ffffff; border-radius: 20px; padding: 20px; border: 1px solid #e2e8f0; box-shadow: 0 2px 16px rgba(0,0,0,0.07); animation: fadeIn 0.4s ease; }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; transition: all 0.3s; box-shadow: 0 8px 25px rgba(102,126,234,0.3); }
+        .btn-primary:active { transform: scale(0.95); }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 35px rgba(102,126,234,0.5); }
+        .toggle-btn { color: #64748b; }
+        .toggle-btn.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        input, select, textarea { background: #f8fafc !important; border: 1.5px solid #e2e8f0 !important; color: #1e293b !important; border-radius: 12px !important; }
+        input::placeholder, textarea::placeholder { color: #94a3b8 !important; }
+        input:focus, select:focus, textarea:focus { border-color: #667eea !important; outline: none !important; }
+        .loader { border: 2px solid #e2e8f0; border-top: 2px solid #667eea; border-radius: 50%; width: 14px; height: 14px; animation: spin 1s linear infinite; display: inline-block; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        .toast { position: fixed; top: 20px; right: 20px; background: #ffffff; border: 1px solid #e2e8f0; padding: 16px 20px; border-radius: 12px; box-shadow: 0 8px 30px rgba(0,0,0,0.12); z-index: 9999; animation: slideIn 0.3s ease; display: flex; align-items: center; gap: 12px; min-width: 280px; }
+        .toast.success { border-left: 4px solid #10b981; }
+        .toast.error { border-left: 4px solid #ef4444; }
+        .gradient-text { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .nav-btn { background: #f8fafc; border: 1.5px solid #e2e8f0 !important; }
+        .nav-btn:hover { background: #f1f5f9; }
+        .nav-btn.active { background: linear-gradient(135deg, rgba(102,126,234,0.12), rgba(118,75,162,0.08)) !important; border: 2px solid #667eea !important; box-shadow: 0 0 12px rgba(102,126,234,0.2); }
+        .sidebar { background: #ffffff; border-right: 1.5px solid #e2e8f0; }
+        p, span, label, li, td, th, textarea, button { font-size: 13px; }
+        h1, h2, h3, h4 { font-size: revert; }
+        .text-xs, .text-\[8px\], .text-\[9px\], .text-\[10px\], .text-\[11px\] { font-size: 13px !important; }
+        .text-\[7px\] { font-size: 11px !important; }
+    </style>
+</head>
+<body>
+
+    <!-- PIN LOCK PAGE -->
+    <section id="pin-lock-page" class="hidden fixed inset-0 z-[200] flex flex-col items-center justify-center" style="background:#f1f5f9;">
+        <div class="text-center mb-8">
+            <div class="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <span class="material-icons text-white text-4xl">lock</span>
+            </div>
+            <h2 class="text-2xl font-black gradient-text">SpendWise</h2>
+            <p class="text-slate-400 mt-1">Enter your PIN to unlock</p>
+        </div>
+        <div class="w-full max-w-xs mx-auto px-8">
+            <div class="flex justify-center gap-4 mb-8">
+                <div id="pin-dot-0" class="w-4 h-4 rounded-full border-2 border-slate-300" style="transition:all 0.2s;"></div>
+                <div id="pin-dot-1" class="w-4 h-4 rounded-full border-2 border-slate-300" style="transition:all 0.2s;"></div>
+                <div id="pin-dot-2" class="w-4 h-4 rounded-full border-2 border-slate-300" style="transition:all 0.2s;"></div>
+                <div id="pin-dot-3" class="w-4 h-4 rounded-full border-2 border-slate-300" style="transition:all 0.2s;"></div>
+            </div>
+            <p id="pin-error" class="text-center text-rose-500 font-bold mb-4 min-h-[1.2rem]"></p>
+            <div class="grid grid-cols-3 gap-3">
+                <button onclick="pinKey('1')" class="h-16 rounded-2xl text-xl font-bold text-slate-700 active:scale-95 transition-all" style="background:#fff;border:1.5px solid #e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,0.06);">1</button>
+                <button onclick="pinKey('2')" class="h-16 rounded-2xl text-xl font-bold text-slate-700 active:scale-95 transition-all" style="background:#fff;border:1.5px solid #e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,0.06);">2</button>
+                <button onclick="pinKey('3')" class="h-16 rounded-2xl text-xl font-bold text-slate-700 active:scale-95 transition-all" style="background:#fff;border:1.5px solid #e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,0.06);">3</button>
+                <button onclick="pinKey('4')" class="h-16 rounded-2xl text-xl font-bold text-slate-700 active:scale-95 transition-all" style="background:#fff;border:1.5px solid #e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,0.06);">4</button>
+                <button onclick="pinKey('5')" class="h-16 rounded-2xl text-xl font-bold text-slate-700 active:scale-95 transition-all" style="background:#fff;border:1.5px solid #e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,0.06);">5</button>
+                <button onclick="pinKey('6')" class="h-16 rounded-2xl text-xl font-bold text-slate-700 active:scale-95 transition-all" style="background:#fff;border:1.5px solid #e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,0.06);">6</button>
+                <button onclick="pinKey('7')" class="h-16 rounded-2xl text-xl font-bold text-slate-700 active:scale-95 transition-all" style="background:#fff;border:1.5px solid #e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,0.06);">7</button>
+                <button onclick="pinKey('8')" class="h-16 rounded-2xl text-xl font-bold text-slate-700 active:scale-95 transition-all" style="background:#fff;border:1.5px solid #e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,0.06);">8</button>
+                <button onclick="pinKey('9')" class="h-16 rounded-2xl text-xl font-bold text-slate-700 active:scale-95 transition-all" style="background:#fff;border:1.5px solid #e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,0.06);">9</button>
+                <div></div>
+                <button onclick="pinKey('0')" class="h-16 rounded-2xl text-xl font-bold text-slate-700 active:scale-95 transition-all" style="background:#fff;border:1.5px solid #e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,0.06);">0</button>
+                <button onclick="pinBackspace()" class="h-16 rounded-2xl flex items-center justify-center active:scale-95 transition-all" style="background:#fff;border:1.5px solid #e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,0.06);"><span class="material-icons text-slate-500">backspace</span></button>
+            </div>
+            <button onclick="pinForgot()" class="w-full mt-6 text-slate-400 underline">Forgot PIN?</button>
+        </div>
+    </section>
+
+    <!-- PIN SETUP PAGE -->
+    <section id="pin-setup-page" class="hidden fixed inset-0 z-[200] flex flex-col items-center justify-center" style="background:#f1f5f9;">
+        <div class="text-center mb-8">
+            <div class="w-20 h-20 rounded-full flex items-center justify-center mx-auto mb-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <span class="material-icons text-white text-4xl">lock_open</span>
+            </div>
+            <h2 id="pin-setup-title" class="text-2xl font-black text-slate-700">Set a PIN</h2>
+            <p id="pin-setup-sub" class="text-slate-400 mt-1">Choose a 4-digit PIN to secure your app</p>
+        </div>
+        <div class="w-full max-w-xs mx-auto px-8">
+            <div class="flex justify-center gap-4 mb-8">
+                <div id="setup-dot-0" class="w-4 h-4 rounded-full border-2 border-slate-300" style="transition:all 0.2s;"></div>
+                <div id="setup-dot-1" class="w-4 h-4 rounded-full border-2 border-slate-300" style="transition:all 0.2s;"></div>
+                <div id="setup-dot-2" class="w-4 h-4 rounded-full border-2 border-slate-300" style="transition:all 0.2s;"></div>
+                <div id="setup-dot-3" class="w-4 h-4 rounded-full border-2 border-slate-300" style="transition:all 0.2s;"></div>
+            </div>
+            <p id="pin-setup-error" class="text-center text-rose-500 font-bold mb-4 min-h-[1.2rem]"></p>
+            <div class="grid grid-cols-3 gap-3">
+                <button onclick="setupPinKey('1')" class="h-16 rounded-2xl text-xl font-bold text-slate-700 active:scale-95 transition-all" style="background:#fff;border:1.5px solid #e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,0.06);">1</button>
+                <button onclick="setupPinKey('2')" class="h-16 rounded-2xl text-xl font-bold text-slate-700 active:scale-95 transition-all" style="background:#fff;border:1.5px solid #e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,0.06);">2</button>
+                <button onclick="setupPinKey('3')" class="h-16 rounded-2xl text-xl font-bold text-slate-700 active:scale-95 transition-all" style="background:#fff;border:1.5px solid #e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,0.06);">3</button>
+                <button onclick="setupPinKey('4')" class="h-16 rounded-2xl text-xl font-bold text-slate-700 active:scale-95 transition-all" style="background:#fff;border:1.5px solid #e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,0.06);">4</button>
+                <button onclick="setupPinKey('5')" class="h-16 rounded-2xl text-xl font-bold text-slate-700 active:scale-95 transition-all" style="background:#fff;border:1.5px solid #e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,0.06);">5</button>
+                <button onclick="setupPinKey('6')" class="h-16 rounded-2xl text-xl font-bold text-slate-700 active:scale-95 transition-all" style="background:#fff;border:1.5px solid #e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,0.06);">6</button>
+                <button onclick="setupPinKey('7')" class="h-16 rounded-2xl text-xl font-bold text-slate-700 active:scale-95 transition-all" style="background:#fff;border:1.5px solid #e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,0.06);">7</button>
+                <button onclick="setupPinKey('8')" class="h-16 rounded-2xl text-xl font-bold text-slate-700 active:scale-95 transition-all" style="background:#fff;border:1.5px solid #e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,0.06);">8</button>
+                <button onclick="setupPinKey('9')" class="h-16 rounded-2xl text-xl font-bold text-slate-700 active:scale-95 transition-all" style="background:#fff;border:1.5px solid #e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,0.06);">9</button>
+                <div></div>
+                <button onclick="setupPinKey('0')" class="h-16 rounded-2xl text-xl font-bold text-slate-700 active:scale-95 transition-all" style="background:#fff;border:1.5px solid #e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,0.06);">0</button>
+                <button onclick="setupPinBackspace()" class="h-16 rounded-2xl flex items-center justify-center active:scale-95 transition-all" style="background:#fff;border:1.5px solid #e2e8f0;box-shadow:0 2px 8px rgba(0,0,0,0.06);"><span class="material-icons text-slate-500">backspace</span></button>
+            </div>
+            <button onclick="skipPinSetup()" class="w-full mt-6 text-slate-400 underline">Skip for now</button>
+        </div>
+    </section>
+
+    <section id="auth-page" class="min-h-screen flex flex-col justify-center px-8" style="background:#f1f5f9;">
+        <div class="text-center mb-10">
+            <h1 id="auth-title" class="text-4xl font-black gradient-text italic tracking-tighter">SpendWise</h1>
+            <p id="auth-subtitle" class="text-slate-400 mt-2 text-[10px] uppercase tracking-[0.3em] font-bold">Secure Finance Manager</p>
+        </div>
+        <form id="auth-form" class="space-y-4 max-w-sm mx-auto w-full">
+            <input type="text" id="auth-name" placeholder="Full Name" class="hidden w-full p-4 outline-none">
+            <input type="email" id="auth-email" placeholder="Email Address" class="w-full p-4 outline-none" required>
+            <input type="password" id="auth-master" placeholder="Secret Recovery Key" class="hidden w-full p-4 outline-none">
+            <input type="password" id="auth-pass" placeholder="Password" class="w-full p-4 outline-none" required>
+            <button type="submit" id="auth-btn" class="w-full btn-primary p-4 rounded-2xl font-bold uppercase tracking-widest">Login</button>
+            <button type="button" onclick="openRecovery()" class="w-full text-slate-400 mt-2 block text-center underline">Forgot Password?</button>
+        </form>
+        <p class="text-center mt-8 text-slate-500">
+            <span id="toggle-text">Don't have an account?</span>
+            <button onclick="toggleAuthMode()" id="toggle-link" class="text-indigo-500 font-bold ml-1">Sign Up</button>
+        </p>
+    </section>
+
+    <section id="dashboard-page" class="hidden pb-32">
+        <div class="fixed left-0 top-0 h-full w-14 z-40 sidebar flex flex-col items-center py-4 gap-1 overflow-y-auto">
+            <div class="w-9 h-9 rounded-full flex items-center justify-center mb-2 flex-shrink-0" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <span class="material-icons text-white" style="font-size:16px;">account_balance_wallet</span>
+            </div>
+            <button onclick="showPage('dashboard-page')" class="nav-btn active w-11 h-11 rounded-xl flex items-center justify-center transition-all flex-shrink-0">
+                <span class="material-icons text-blue-500" style="font-size:24px;">dashboard</span>
+            </button>
+            <button onclick="showPage('add-page')" class="nav-btn w-11 h-11 rounded-xl flex items-center justify-center transition-all flex-shrink-0">
+                <span class="material-icons text-purple-500" style="font-size:24px;">add_circle</span>
+            </button>
+            <button onclick="showPage('predictions-page')" class="nav-btn w-11 h-11 rounded-xl flex items-center justify-center transition-all flex-shrink-0">
+                <span class="material-icons text-pink-500" style="font-size:24px;">trending_up</span>
+            </button>
+            <button onclick="showPage('streaks-page')" class="nav-btn w-11 h-11 rounded-xl flex items-center justify-center transition-all flex-shrink-0">
+                <span class="material-icons text-orange-400" style="font-size:24px;">local_fire_department</span>
+            </button>
+            <button onclick="showPage('sms-page')" class="nav-btn w-11 h-11 rounded-xl flex items-center justify-center transition-all flex-shrink-0">
+                <span class="material-icons text-emerald-500" style="font-size:24px;">sms</span>
+            </button>
+            <button onclick="showPage('insights-page')" class="nav-btn w-11 h-11 rounded-xl flex items-center justify-center transition-all flex-shrink-0">
+                <span class="material-icons text-yellow-500" style="font-size:24px;">insights</span>
+            </button>
+            <button onclick="showPage('history-page')" class="nav-btn w-11 h-11 rounded-xl flex items-center justify-center transition-all flex-shrink-0">
+                <span class="material-icons text-cyan-500" style="font-size:24px;">history</span>
+            </button>
+            <button onclick="showPage('smart-page')" class="nav-btn w-11 h-11 rounded-xl flex items-center justify-center transition-all flex-shrink-0">
+                <span class="material-icons text-indigo-500" style="font-size:24px;">auto_awesome</span>
+            </button>
+            <button onclick="showPage('profile-page')" class="nav-btn w-11 h-11 rounded-xl flex items-center justify-center transition-all flex-shrink-0">
+                <span class="material-icons text-slate-500" style="font-size:24px;">person</span>
+            </button>
+        </div>
+        
+        <header class="p-6 sticky top-0 z-30 ml-14" style="background: #ffffff; border-bottom: 1.5px solid #e2e8f0;">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <p class="text-[9px] font-bold uppercase tracking-widest text-slate-400">Welcome Back,</p>
+                    <h1 id="user-display-name" class="text-2xl font-bold gradient-text">Kaviya</h1>
+                </div>
+                <button onclick="logoutUser()" class="text-rose-500 w-10 h-10 rounded-xl flex items-center justify-center" style="background:#fff0f0; border: 1.5px solid #fecaca;">
+                    <span class="material-icons">logout</span>
+                </button>
+            </div>
+            <div class="grid grid-cols-3 gap-3 mt-4">
+                <div class="text-center p-3 rounded-xl" style="background:#eff6ff; border: 1.5px solid #bfdbfe;">
+                    <p class="text-[8px] text-blue-400 font-bold uppercase">Transactions</p>
+                    <h3 id="total-txs" class="text-xl font-bold text-blue-600">0</h3>
+                </div>
+                <div class="text-center p-3 rounded-xl" style="background:#faf5ff; border: 1.5px solid #e9d5ff;">
+                    <p class="text-[8px] text-purple-400 font-bold uppercase">Avg/Day</p>
+                    <h3 id="avg-daily" class="text-xl font-bold text-purple-600">₹0</h3>
+                </div>
+                <div class="text-center p-3 rounded-xl" style="background:#f0fdf4; border: 1.5px solid #bbf7d0;">
+                    <p class="text-[8px] text-emerald-500 font-bold uppercase">Savings</p>
+                    <h3 id="savings-rate" class="text-xl font-bold text-emerald-600">0%</h3>
+                </div>
+            </div>
+        </header>
+
+        <main class="px-5 space-y-5 ml-14">
+            <div class="border-none text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 20px; padding: 20px; box-shadow: 0 8px 30px rgba(102,126,234,0.3); animation: fadeIn 0.5s ease;">
+                <p class="text-indigo-100 text-[9px] font-bold uppercase tracking-widest">Total Balance</p>
+                <h2 id="total-balance" class="text-4xl font-bold mt-1 tracking-tight">₹0.00</h2>
+            </div>
+
+            <div class="flex gap-4">
+                <div class="flex-1 border-l-4 border-l-emerald-500" style="background:#f0fdf4; border-radius: 16px; padding: 16px; border: 1.5px solid #bbf7d0;">
+                    <p class="text-[8px] text-emerald-500 font-bold uppercase">Income</p>
+                    <h3 id="dash-income" class="text-xl font-bold text-emerald-600">₹0</h3>
+                </div>
+                <div class="flex-1 border-l-4 border-l-rose-500" style="background:#fff1f2; border-radius: 16px; padding: 16px; border: 1.5px solid #fecdd3;">
+                    <p class="text-[8px] text-rose-500 font-bold uppercase">Expenses</p>
+                    <h3 id="dash-expense" class="text-xl font-bold text-rose-600">₹0</h3>
+                </div>
+            </div>
+            
+
+            <div class="card">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Cash Flow Trend</h3>
+                    <div class="flex bg-slate-100 rounded-lg p-1 border border-slate-200">
+                        <button onclick="changeFilter('week')" id="week-btn" class="toggle-btn active px-3 py-1 text-[8px] font-bold rounded-md uppercase text-slate-600">Week</button>
+                        <button onclick="changeFilter('month')" id="month-btn" class="toggle-btn px-3 py-1 text-[8px] font-bold rounded-md ml-1 uppercase text-slate-600">Month</button>
+                        <button onclick="changeFilter('all')" id="all-btn" class="toggle-btn px-3 py-1 text-[8px] font-bold rounded-md ml-1 uppercase text-slate-600">All</button>
+                    </div>
+                </div>
+                <div id="period-nav" class="flex justify-between items-center mb-2 hidden">
+                    <button onclick="navigatePeriod(-1)" class="text-slate-400 hover:text-slate-700"><span class="material-icons text-sm">chevron_left</span></button>
+                    <span id="period-label" class="text-[9px] font-bold text-slate-400 uppercase tracking-widest"></span>
+                    <button onclick="navigatePeriod(1)" class="text-slate-400 hover:text-slate-700"><span class="material-icons text-sm">chevron_right</span></button>
+                </div>
+                <div style="height: 160px;"><canvas id="lineChart"></canvas></div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4">
+                <div class="card px-3 py-4">
+                    <h3 class="text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-3">Daily Spending</h3>
+                    <div style="height: 140px;"><canvas id="barChart"></canvas></div>
+                </div>
+                <div class="card px-3 py-4">
+                    <h3 class="text-[8px] font-bold text-slate-400 uppercase tracking-widest mb-3">Categories</h3>
+                    <div class="flex gap-3">
+                        <div style="height: 120px; width: 120px; flex-shrink: 0;"><canvas id="donutChart"></canvas></div>
+                        <div id="category-legend" class="flex-1 space-y-1 text-[9px]"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tx-list" class="space-y-3"></div>
+        </main>
+    </section>
+
+    <section id="add-page" class="hidden fixed inset-0 z-[100] p-6 overflow-y-auto" style="background:#f1f5f9;">
+        <div class="flex items-center justify-between mb-6">
+            <button onclick="showPage('dashboard-page')" class="w-10 h-10 flex items-center justify-center rounded-xl" style="background:#fff; border:1.5px solid #e2e8f0;">
+                <span class="material-icons text-slate-600 text-sm">arrow_back_ios_new</span>
+            </button>
+            <h2 class="text-xl font-bold gradient-text tracking-tight">Add Transaction</h2>
+            <div class="w-10"></div>
+        </div>
+
+    <div class="max-w-md mx-auto space-y-6">
+        <!-- Quick Category Shortcuts -->
+        <div class="p-4 rounded-2xl" style="background:#fff; border:1.5px solid #e2e8f0;">
+            <p class="text-[8px] text-slate-400 font-bold uppercase tracking-widest mb-3">Quick Categories</p>
+            <div class="grid grid-cols-5 gap-2">
+                <button onclick="quickCategory('Food', 'restaurant')" class="flex flex-col items-center gap-1 p-2 rounded-lg transition-all active:scale-95" style="background:#fff7ed;">
+                    <span class="material-icons text-orange-400 text-lg">restaurant</span>
+                    <span class="text-[8px] text-slate-500">Food</span>
+                </button>
+                <button onclick="quickCategory('Transport', 'directions_car')" class="flex flex-col items-center gap-1 p-2 rounded-lg transition-all active:scale-95" style="background:#eff6ff;">
+                    <span class="material-icons text-blue-400 text-lg">directions_car</span>
+                    <span class="text-[8px] text-slate-500">Travel</span>
+                </button>
+                <button onclick="quickCategory('Bills', 'receipt_long')" class="flex flex-col items-center gap-1 p-2 rounded-lg transition-all active:scale-95" style="background:#faf5ff;">
+                    <span class="material-icons text-purple-400 text-lg">receipt_long</span>
+                    <span class="text-[8px] text-slate-500">Bills</span>
+                </button>
+                <button onclick="quickCategory('Shopping', 'local_mall')" class="flex flex-col items-center gap-1 p-2 rounded-lg transition-all active:scale-95" style="background:#fdf2f8;">
+                    <span class="material-icons text-pink-400 text-lg">local_mall</span>
+                    <span class="text-[8px] text-slate-500">Shop</span>
+                </button>
+                <button onclick="quickCategory('Income', 'savings')" class="flex flex-col items-center gap-1 p-2 rounded-lg transition-all active:scale-95" style="background:#f0fdf4;">
+                    <span class="material-icons text-emerald-400 text-lg">savings</span>
+                    <span class="text-[8px] text-slate-500">Income</span>
+                </button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-5">
+            <button onclick="startVoiceInput()" class="group p-8 rounded-[32px] flex flex-col items-center transition-all active:scale-95" style="background:#fff; border:1.5px solid #e2e8f0;">
+                <div class="w-12 h-12 rounded-2xl flex items-center justify-center mb-3" style="background:#eff6ff; color:#667eea;">
+                    <span class="material-icons">mic</span>
+                </div>
+                <span class="text-[11px] font-black text-slate-500 uppercase tracking-widest">Voice</span>
+            </button>
+            <label class="group p-8 rounded-[32px] flex flex-col items-center cursor-pointer transition-all active:scale-95" style="background:#fff; border:1.5px solid #e2e8f0;">
+                <div class="w-12 h-12 rounded-2xl flex items-center justify-center mb-3" style="background:#faf5ff; color:#a855f7;">
+                    <span class="material-icons">photo_camera</span>
+                </div>
+                <span class="text-[11px] font-black text-slate-500 uppercase tracking-widest">Scan Bill</span>
+                <input type="file" id="file-input" accept="image/*" class="hidden" onchange="performOCR(this)">
+            </label>
+        </div>
+
+                <div class="space-y-5">
+            <p id="ai-status" class="text-center text-[11px] font-bold text-blue-500 min-h-[1rem]"></p>
+            
+            <div class="relative">
+                <input type="text" id="note-input" placeholder="Bill Description" class="w-full p-5 rounded-2xl outline-none transition-all font-medium" oninput="handleNoteInput(this.value)">
+                <span class="absolute right-5 top-5 text-slate-400 material-icons">edit_note</span>
+            </div>
+
+            <div class="p-6 rounded-2xl" style="background:#fff; border:1.5px solid #e2e8f0;">
+    <p class="text-[9px] text-slate-400 font-bold uppercase tracking-[0.2em] mb-2">Total Amount</p>
+    <div class="flex items-center">
+        <span class="text-lg font-bold text-slate-400 mr-2">₹</span>
+        <input type="number" id="amt-input" step="0.01" placeholder="0.00" 
+               class="w-full text-xl font-bold bg-transparent border-none outline-none focus:ring-0">
+    </div>
+</div>
+
+            <div class="grid grid-cols-1 gap-4">
+                <div class="relative">
+                    <select id="cat-input" class="w-full p-5 rounded-2xl outline-none appearance-none font-bold">
+                        <option value="Food">Food / Grocery</option>
+                        <option value="Transport">Transport</option>
+                        <option value="Bills">Bills / Rent</option>
+                        <option value="Shopping">Shopping</option>
+                        <option value="Others" selected>Others</option>
+                        <option value="Income">Income</option>
+                    </select>
+                    <span class="absolute right-5 top-5 text-slate-600 material-icons pointer-events-none">expand_more</span>
+                </div>
+                
+                <div class="relative">
+                    <input type="date" id="date-input" class="w-full p-5 rounded-2xl outline-none font-bold">
+                </div>
+            </div>
+
+            <button onclick="saveEntry()" id="save-btn" class="w-full text-white p-6 rounded-3xl font-black uppercase tracking-[0.3em] transition-all active:scale-95 mt-6" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); box-shadow: 0 10px 40px rgba(102, 126, 234, 0.5);">
+                <span id="save-text">Save Entry</span>
+                <span id="save-loader" class="loader hidden" style="border-color: rgba(255,255,255,0.3); border-top-color: white;"></span>
+            </button>
+            <div class="grid grid-cols-2 gap-3 mt-4">
+                <button onclick="downloadCSV()" class="flex items-center justify-center gap-2 p-4 rounded-2xl transition-all active:scale-95" style="background:#eff6ff; border:1.5px solid #bfdbfe;">
+                    <span class="material-icons text-blue-500">file_download</span>
+                    <span class="text-[10px] font-black text-blue-600 uppercase tracking-widest">CSV</span>
+                </button>
+                <button onclick="downloadPDF()" class="flex items-center justify-center gap-2 p-4 rounded-2xl transition-all active:scale-95" style="background:#fff1f2; border:1.5px solid #fecdd3;">
+                    <span class="material-icons text-rose-500">picture_as_pdf</span>
+                    <span class="text-[10px] font-black text-rose-600 uppercase tracking-widest">PDF</span>
+                </button>
+            </div>
+
+            <!-- Recent Transactions -->
+            <div class="mt-6 p-4 rounded-2xl" style="background:#fff; border:1.5px solid #e2e8f0;">
+                <p class="text-[8px] text-slate-400 font-bold uppercase tracking-widest mb-3">Recent Transactions</p>
+                <div id="recent-txs" class="space-y-2 max-h-64 overflow-y-auto"></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+    <!-- SMART FEATURES PAGE -->
+    <section id="smart-page" class="hidden fixed inset-0 z-[100] p-6 overflow-y-auto" style="background:#f1f5f9;">
+        <div class="flex items-center justify-between mb-6">
+            <button onclick="showPage('dashboard-page')" class="w-10 h-10 flex items-center justify-center rounded-xl" style="background:#fff;border:1.5px solid #e2e8f0;">
+                <span class="material-icons text-slate-600 text-sm">arrow_back_ios_new</span>
+            </button>
+            <h2 class="text-xl font-bold gradient-text tracking-tight">Smart Features</h2>
+            <div class="w-10"></div>
+        </div>
+        <div class="max-w-md mx-auto space-y-5">
+
+            <!-- FINANCIAL HEALTH SCORE -->
+            <div class="card">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Financial Health Score</h3>
+                    <span class="material-icons text-indigo-400">favorite</span>
+                </div>
+                <div class="flex items-center gap-5">
+                    <div class="relative w-24 h-24 flex-shrink-0">
+                        <svg viewBox="0 0 36 36" class="w-24 h-24 -rotate-90">
+                            <circle cx="18" cy="18" r="15.9" fill="none" stroke="#e2e8f0" stroke-width="3"/>
+                            <circle id="health-arc" cx="18" cy="18" r="15.9" fill="none" stroke="#667eea" stroke-width="3" stroke-dasharray="0 100" stroke-linecap="round" style="transition:stroke-dasharray 1s ease;"/>
+                        </svg>
+                        <div class="absolute inset-0 flex flex-col items-center justify-center">
+                            <span id="health-score" class="text-2xl font-black text-slate-700">0</span>
+                            <span class="text-[8px] text-slate-400 font-bold">/100</span>
+                        </div>
+                    </div>
+                    <div class="flex-1">
+                        <p id="health-label" class="font-bold text-lg text-slate-700 mb-1">--</p>
+                        <p id="health-tip" class="text-slate-500 leading-relaxed"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BUDGET LIMITS -->
+            <div class="card">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Monthly Budget Limits</h3>
+                    <span class="material-icons text-orange-400">account_balance_wallet</span>
+                </div>
+                <div id="budget-list" class="space-y-3"></div>
+                <button onclick="saveBudgets()" class="w-full mt-4 p-3 rounded-xl font-bold text-white" style="background:linear-gradient(135deg,#667eea,#764ba2);">Save Budgets</button>
+            </div>
+
+            <!-- SAVINGS GOAL -->
+            <div class="card">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Savings Goal</h3>
+                    <span class="material-icons text-emerald-400">savings</span>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex gap-2">
+                        <input type="text" id="goal-name" placeholder="Goal name (e.g. iPhone)" class="flex-1 p-3 rounded-xl outline-none">
+                        <input type="number" id="goal-amt" placeholder="₹ Target" class="w-28 p-3 rounded-xl outline-none">
+                    </div>
+                    <button onclick="saveGoal()" class="w-full p-3 rounded-xl font-bold text-white" style="background:linear-gradient(135deg,#10b981,#059669);">Set Goal</button>
+                    <div id="goal-display" class="hidden">
+                        <div class="flex justify-between mb-1">
+                            <span id="goal-name-display" class="font-bold text-slate-700"></span>
+                            <span id="goal-progress-text" class="text-slate-500"></span>
+                        </div>
+                        <div class="w-full rounded-full h-3" style="background:#e2e8f0;">
+                            <div id="goal-bar" class="h-3 rounded-full transition-all duration-700" style="background:linear-gradient(135deg,#10b981,#059669);width:0%;"></div>
+                        </div>
+                        <p id="goal-remaining" class="text-slate-400 mt-1"></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SMART BUDGET SUGGESTION -->
+            <div class="card">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Smart Budget Suggestion</h3>
+                    <span class="material-icons text-purple-400">psychology</span>
+                </div>
+                <div id="smart-budget-list" class="space-y-2">
+                    <p class="text-slate-400 text-center py-3">Add more transactions to get suggestions.</p>
+                </div>
+            </div>
+
+            <!-- WHATSAPP SUMMARY -->
+            <div class="card">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">WhatsApp Summary</h3>
+                    <span class="material-icons text-green-500">share</span>
+                </div>
+                <p class="text-slate-400 mb-4">Share this week's spending summary via WhatsApp.</p>
+                <button onclick="shareWhatsApp()" class="w-full p-4 rounded-xl font-bold text-white flex items-center justify-center gap-2" style="background:linear-gradient(135deg,#25d366,#128c7e);">
+                    <span class="material-icons">whatsapp</span>
+                    Share Weekly Summary
+                </button>
+            </div>
+
+        </div>
+    </section>
+
+    <section id="profile-page" class="hidden fixed inset-0 z-[100] p-6 overflow-y-auto" style="background:#f1f5f9;"><div class="max-w-md mx-auto">
+        <button onclick="showPage('dashboard-page')" class="fixed top-4 left-4 z-[120] w-10 h-10 flex items-center justify-center rounded-xl" style="background:#fff; border:1.5px solid #e2e8f0; box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+            <span class="material-icons text-slate-600 text-sm">arrow_back_ios_new</span>
+        </button>
+        <h2 class="text-xl font-bold gradient-text tracking-tight text-center mb-6">Profile</h2>
+
+        <div class="max-w-md mx-auto space-y-5">
+            <!-- Avatar Card -->
+            <div class="card text-center py-8" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);border:none;">
+                <div class="relative inline-block mb-4">
+                    <div id="profile-pic" class="w-24 h-24 rounded-full mx-auto flex items-center justify-center" style="background:rgba(255,255,255,0.2);border:3px solid rgba(255,255,255,0.4);">
+                        <span class="material-icons text-white text-5xl">person</span>
+                    </div>
+                    <label id="pic-upload-btn" class="absolute bottom-0 right-0 w-7 h-7 rounded-full flex items-center justify-center cursor-pointer" style="background:#fff;">
+                        <span class="material-icons text-indigo-500 text-sm">camera_alt</span>
+                        <input type="file" id="pic-input" accept="image/*" class="hidden" onchange="uploadProfilePic(this)">
+                    </label>
+                    <button id="pic-delete-btn" onclick="deleteProfilePic()" class="hidden absolute top-0 right-0 w-7 h-7 rounded-full flex items-center justify-center" style="background:#ef4444;">
+                        <span class="material-icons text-white text-sm">close</span>
+                    </button>
+                </div>
+                <h3 id="profile-name" class="text-2xl font-black text-white mb-1">User</h3>
+                <p id="profile-email" class="text-indigo-100">user@email.com</p>
+            </div>
+
+            <!-- Personal Info -->
+            <div class="card">
+                <h3 class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-4">Personal Information</h3>
+                <div class="space-y-3">
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 block">Date of Birth</label>
+                        <input type="date" id="profile-dob" class="w-full p-3 rounded-xl outline-none" disabled style="opacity:0.6;">
+                    </div>
+                    <div>
+                        <label class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1 block">Phone Number</label>
+                        <input type="tel" id="profile-phone" placeholder="+91 XXXXX XXXXX" class="w-full p-3 rounded-xl outline-none" disabled style="opacity:0.6;">
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="editPersonalInfo()" id="edit-info-btn" class="flex-1 p-3 rounded-xl font-bold text-slate-600 flex items-center justify-center gap-2" style="background:#f1f5f9; border:1.5px solid #e2e8f0;">
+                            <span class="material-icons text-sm text-indigo-500">edit</span> Edit
+                        </button>
+                        <button onclick="savePersonalInfo()" id="save-info-btn" class="flex-1 p-3 rounded-xl font-bold text-white hidden btn-primary">Save</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Account Stats -->
+            <div class="card">
+                <h3 class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-4">Account Stats</h3>
+                <div class="space-y-2">
+                    <div class="flex justify-between items-center p-3 rounded-xl" style="background:#f8fafc; border:1.5px solid #e2e8f0;">
+                        <div class="flex items-center gap-2"><span class="material-icons text-indigo-400 text-base">receipt_long</span><span class="text-slate-600 font-medium">Total Transactions</span></div>
+                        <span id="profile-total-txs" class="font-black text-slate-800">0</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 rounded-xl" style="background:#f0fdf4; border:1.5px solid #bbf7d0;">
+                        <div class="flex items-center gap-2"><span class="material-icons text-emerald-500 text-base">trending_up</span><span class="text-slate-600 font-medium">Total Income</span></div>
+                        <span id="profile-total-income" class="font-black text-emerald-600">₹0</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 rounded-xl" style="background:#fff1f2; border:1.5px solid #fecdd3;">
+                        <div class="flex items-center gap-2"><span class="material-icons text-rose-400 text-base">trending_down</span><span class="text-slate-600 font-medium">Total Expenses</span></div>
+                        <span id="profile-total-expense" class="font-black text-rose-500">₹0</span>
+                    </div>
+                    <div class="flex justify-between items-center p-3 rounded-xl" style="background:#eff6ff; border:1.5px solid #bfdbfe;">
+                        <div class="flex items-center gap-2"><span class="material-icons text-blue-500 text-base">account_balance_wallet</span><span class="text-slate-600 font-medium">Net Balance</span></div>
+                        <span id="profile-balance" class="font-black text-blue-600">₹0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card">
+                <h3 class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-3">Quick Actions</h3>
+                <div class="space-y-2">
+                    <button onclick="downloadCSV()" class="w-full flex items-center gap-3 p-3 rounded-xl transition-all active:scale-95" style="background:#eff6ff; border:1.5px solid #bfdbfe;">
+                        <span class="material-icons text-blue-500">file_download</span>
+                        <span class="font-semibold text-slate-700">Download CSV Report</span>
+                    </button>
+                    <button onclick="downloadPDF()" class="w-full flex items-center gap-3 p-3 rounded-xl transition-all active:scale-95" style="background:#fff1f2; border:1.5px solid #fecdd3;">
+                        <span class="material-icons text-rose-400">picture_as_pdf</span>
+                        <span class="font-semibold text-slate-700">Download PDF Report</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Security -->
+            <div class="card">
+                <h3 class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-3">Security</h3>
+                <div class="space-y-2">
+                    <button onclick="openPinSetup()" class="w-full flex items-center gap-3 p-3 rounded-xl transition-all active:scale-95" style="background:#f0fdf4; border:1.5px solid #bbf7d0;">
+                        <span class="material-icons text-emerald-500">lock</span>
+                        <span class="font-semibold text-slate-700">Set / Change PIN Lock</span>
+                    </button>
+                    <button onclick="removePinLock()" class="w-full flex items-center gap-3 p-3 rounded-xl transition-all active:scale-95" style="background:#fff1f2; border:1.5px solid #fecdd3;">
+                        <span class="material-icons text-rose-400">lock_open</span>
+                        <span class="font-semibold text-slate-700">Remove PIN Lock</span>
+                    </button>
+                </div>
+            </div>
+
+            <button onclick="logoutUser()" class="w-full p-5 rounded-2xl font-bold text-white flex items-center justify-center gap-2" style="background:linear-gradient(135deg,#ef4444 0%,#dc2626 100%);">
+                <span class="material-icons">logout</span>
+                <span>Logout</span>
+            </button>
+        </div>
+    </div>
+    </section>
+
+    <section id="predictions-page" class="hidden fixed inset-0 z-[100] p-6 overflow-y-auto" style="background:#f1f5f9;">
+        <div class="flex items-center justify-between mb-6">
+            <button onclick="showPage('dashboard-page')" class="w-10 h-10 flex items-center justify-center rounded-xl" style="background:#fff; border:1.5px solid #e2e8f0;">
+                <span class="material-icons text-slate-600 text-sm">arrow_back_ios_new</span>
+            </button>
+            <h2 class="text-xl font-bold gradient-text tracking-tight">Predictions</h2>
+            <div class="w-10"></div>
+        </div>
+
+        <div class="max-w-md mx-auto space-y-5">
+            <div class="card">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Next Month Forecast</h3>
+                    <span class="material-icons text-purple-400">trending_up</span>
+                </div>
+                <div class="p-6 rounded-xl" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);">
+                    <p class="text-indigo-100 text-[9px] font-bold uppercase tracking-widest mb-2">Based on last 3 months spending</p>
+                    <h2 id="predicted-amount-page" class="text-5xl font-black text-white mb-3">₹0</h2>
+                    <p id="prediction-trend-page" class="text-indigo-100"></p>
+                </div>
+            </div>
+
+            <div class="card" style="border-left:4px solid #667eea;">
+                <div class="flex items-center gap-2">
+                    <span class="material-icons text-indigo-400">info</span>
+                    <p class="text-slate-600">Predictions use linear trend analysis from your last 90 days of spending patterns.</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3 class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-4">How Predictions Work</h3>
+                <div class="space-y-3">
+                    <div class="flex items-center gap-3 p-3 rounded-xl" style="background:#faf5ff; border:1.5px solid #e9d5ff;">
+                        <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:#8b5cf6;">
+                            <span class="material-icons text-white text-base">analytics</span>
+                        </div>
+                        <div>
+                            <p class="font-bold text-slate-700">Data Analysis</p>
+                            <p class="text-slate-500">Analyzes your last 3 months spending patterns</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 p-3 rounded-xl" style="background:#faf5ff; border:1.5px solid #e9d5ff;">
+                        <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:#a855f7;">
+                            <span class="material-icons text-white text-base">show_chart</span>
+                        </div>
+                        <div>
+                            <p class="font-bold text-slate-700">Trend Detection</p>
+                            <p class="text-slate-500">Identifies if spending is increasing, decreasing, or stable</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 p-3 rounded-xl" style="background:#faf5ff; border:1.5px solid #e9d5ff;">
+                        <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:#7c3aed;">
+                            <span class="material-icons text-white text-base">psychology</span>
+                        </div>
+                        <div>
+                            <p class="font-bold text-slate-700">ML Forecast</p>
+                            <p class="text-slate-500">Uses linear regression to predict next month expenses</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="streaks-page" class="hidden fixed inset-0 z-[100] p-6 overflow-y-auto" style="background:#f1f5f9;">
+        <div class="flex items-center justify-between mb-6">
+            <button onclick="showPage('dashboard-page')" class="w-10 h-10 flex items-center justify-center rounded-xl" style="background:#fff; border:1.5px solid #e2e8f0;">
+                <span class="material-icons text-slate-600 text-sm">arrow_back_ios_new</span>
+            </button>
+            <h2 class="text-xl font-bold gradient-text tracking-tight">Spending Streaks</h2>
+            <div class="w-10"></div>
+        </div>
+
+        <div class="max-w-md mx-auto space-y-5">
+            <div class="grid grid-cols-2 gap-4">
+                <div class="card text-center py-6" style="border-top:4px solid #f59e0b;">
+                    <span class="text-3xl mb-1 block">🔥</span>
+                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Current Streak</p>
+                    <h3 id="current-streak-page" class="text-5xl font-black text-orange-500">0</h3>
+                    <p class="text-slate-400 mt-1">days</p>
+                </div>
+                <div class="card text-center py-6" style="border-top:4px solid #10b981;">
+                    <span class="text-3xl mb-1 block">🏆</span>
+                    <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-1">Best Streak</p>
+                    <h3 id="best-streak-page" class="text-5xl font-black text-emerald-500">0</h3>
+                    <p class="text-slate-400 mt-1">days</p>
+                </div>
+            </div>
+
+            <div class="card text-center py-4">
+                <p id="streak-message-page" class="font-bold text-slate-700"></p>
+            </div>
+
+            <div class="card" style="border-left:4px solid #667eea;">
+                <div class="flex items-center gap-2 mb-1">
+                    <span class="material-icons text-indigo-400">info</span>
+                    <p class="font-bold text-slate-700">How it works</p>
+                </div>
+                <p class="text-slate-500">Keep daily spending under your 30-day average budget to maintain your streak.</p>
+            </div>
+
+            <div class="card">
+                <h3 class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-4">Streak Rules</h3>
+                <div class="space-y-3">
+                    <div class="flex items-center gap-3 p-3 rounded-xl" style="background:#fff7ed; border:1.5px solid #fed7aa;">
+                        <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:#f59e0b;">
+                            <span class="material-icons text-white text-base">calculate</span>
+                        </div>
+                        <div>
+                            <p class="font-bold text-slate-700">Daily Budget</p>
+                            <p class="text-slate-500">Based on last 30 days average</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 p-3 rounded-xl" style="background:#f0fdf4; border:1.5px solid #bbf7d0;">
+                        <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:#10b981;">
+                            <span class="material-icons text-white text-base">check_circle</span>
+                        </div>
+                        <div>
+                            <p class="font-bold text-slate-700">Streak Continues</p>
+                            <p class="text-slate-500">Spend less than daily budget</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 p-3 rounded-xl" style="background:#fff1f2; border:1.5px solid #fecdd3;">
+                        <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background:#ef4444;">
+                            <span class="material-icons text-white text-base">cancel</span>
+                        </div>
+                        <div>
+                            <p class="font-bold text-slate-700">Streak Breaks</p>
+                            <p class="text-slate-500">Exceed your daily budget</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="sms-page" class="hidden fixed inset-0 z-[100] p-6 overflow-y-auto" style="background:#f1f5f9;">
+        <div class="flex items-center justify-between mb-6">
+            <button onclick="showPage('dashboard-page')" class="w-10 h-10 flex items-center justify-center rounded-xl" style="background:#fff; border:1.5px solid #e2e8f0;">
+                <span class="material-icons text-slate-600 text-sm">arrow_back_ios_new</span>
+            </button>
+            <h2 class="text-xl font-bold gradient-text tracking-tight">SMS Parser</h2>
+            <div class="w-10"></div>
+        </div>
+
+        <div class="max-w-md mx-auto space-y-5">
+            <div class="card">
+                <p class="text-[9px] font-bold text-slate-400 uppercase tracking-widest mb-3">Paste your bank SMS below</p>
+                <textarea id="sms-input" rows="6" placeholder="Example: Your A/c XX1234 debited Rs.500 at SWIGGY on 15-Jan-24" class="w-full p-4 rounded-xl outline-none"></textarea>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="parseSMS()" id="parse-btn" class="flex-1 p-4 rounded-2xl font-bold text-white" style="background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);">
+                    <span id="parse-text">Parse & Add</span>
+                    <span id="parse-loader" class="loader hidden"></span>
+                </button>
+                <button onclick="showSMSHistory()" class="flex-1 p-4 rounded-2xl font-bold text-slate-700 flex items-center justify-center gap-2" style="background:#fff; border:1.5px solid #e2e8f0;">
+                    <span class="material-icons text-slate-500 text-sm">history</span>
+                    <span>History</span>
+                </button>
+            </div>
+
+            <div id="parsed-result" class="hidden card">
+                <h3 class="font-bold text-slate-700 mb-3">Parsed Details:</h3>
+                <div class="space-y-2">
+                    <div class="flex justify-between p-2 rounded-lg" style="background:#f8fafc;">
+                        <span class="text-slate-400">Amount</span>
+                        <span id="parsed-amt" class="font-bold text-blue-500"></span>
+                    </div>
+                    <div class="flex justify-between p-2 rounded-lg" style="background:#f8fafc;">
+                        <span class="text-slate-400">Type</span>
+                        <span id="parsed-type" class="font-bold text-slate-700"></span>
+                    </div>
+                    <div class="flex justify-between p-2 rounded-lg" style="background:#f8fafc;">
+                        <span class="text-slate-400">Category</span>
+                        <span id="parsed-cat" class="font-bold text-slate-700"></span>
+                    </div>
+                    <div class="flex justify-between p-2 rounded-lg" style="background:#f8fafc;">
+                        <span class="text-slate-400">Note</span>
+                        <span id="parsed-note" class="font-bold text-slate-700"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="border-left:4px solid #10b981;">
+                <div class="flex items-center gap-2">
+                    <span class="material-icons text-emerald-400">info</span>
+                    <p class="text-slate-600">Supports most Indian bank SMS formats. Works with debit, credit, UPI transactions.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="insights-page" class="hidden fixed inset-0 z-[100] p-6 overflow-y-auto" style="background:#f1f5f9;">
+        <div class="flex items-center justify-between mb-6">
+            <button onclick="showPage('dashboard-page')" class="w-10 h-10 flex items-center justify-center rounded-xl" style="background:#fff; border:1.5px solid #e2e8f0;">
+                <span class="material-icons text-slate-600 text-sm">arrow_back_ios_new</span>
+            </button>
+            <h2 class="text-xl font-bold gradient-text tracking-tight">Spending Insights</h2>
+            <div class="w-10"></div>
+        </div>
+
+        <div class="max-w-md mx-auto space-y-4">
+            <div id="insights-week-card" class="card">
+                <h3 class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-3">This Week vs Last Week</h3>
+                <div id="insights-list" class="space-y-2">
+                    <p class="text-slate-500 text-xs text-center py-4">No insights yet. Add more transactions!</p>
+                </div>
+            </div>
+
+            <div id="overspend-card" class="card hidden">
+                <h3 class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-3">Overspending Alerts</h3>
+                <div id="overspend-list" class="space-y-2"></div>
+            </div>
+
+            <div class="card">
+                <h3 class="text-[9px] font-bold text-slate-500 uppercase tracking-widest mb-3">4-Week Category Averages</h3>
+                <div id="avg-list" class="space-y-2">
+                    <p class="text-slate-500 text-xs text-center py-4">Not enough data yet.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="history-page" class="hidden fixed inset-0 z-[100] p-6 overflow-y-auto" style="background:#f1f5f9;">
+        <div class="flex items-center justify-between mb-6">
+            <button onclick="showPage('dashboard-page')" class="w-10 h-10 flex items-center justify-center rounded-xl" style="background:#fff; border:1.5px solid #e2e8f0;">
+                <span class="material-icons text-slate-600 text-sm">arrow_back_ios_new</span>
+            </button>
+            <h2 class="text-xl font-bold gradient-text tracking-tight">All Transactions</h2>
+            <div class="w-10"></div>
+        </div>
+        <div class="max-w-md mx-auto">
+            <div class="flex gap-2 mb-4">
+                <input type="text" id="history-search" placeholder="Search transactions..." oninput="filterHistory()" class="flex-1 p-3 rounded-xl outline-none">
+                <select id="history-cat-filter" onchange="filterHistory()" class="p-3 rounded-xl outline-none font-bold">
+                    <option value="">All</option>
+                    <option value="Food">Food</option>
+                    <option value="Transport">Transport</option>
+                    <option value="Bills">Bills</option>
+                    <option value="Shopping">Shopping</option>
+                    <option value="Others">Others</option>
+                    <option value="Income">Income</option>
+                </select>
+            </div>
+            <div id="history-list" class="space-y-3"></div>
+        </div>
+    </section>
+
+    <section id="sms-history-modal" class="hidden fixed inset-0 z-[110] p-6 overflow-y-auto" style="background:#f1f5f9;">
+        <div class="flex items-center justify-between mb-10">
+            <button onclick="closeSMSHistory()" class="w-10 h-10 flex items-center justify-center rounded-xl" style="background:#fff; border:1.5px solid #e2e8f0;">
+                <span class="material-icons text-slate-600 text-sm">arrow_back_ios_new</span>
+            </button>
+            <h2 class="text-xl font-bold gradient-text tracking-tight">SMS History</h2>
+            <div class="w-10"></div>
+        </div>
+
+        <div class="max-w-md mx-auto space-y-3">
+            <div id="sms-history-list" class="space-y-3"></div>
+        </div>
+    </section>
+
+    <script>
+        // PIN LOCK LOGIC
+        let pinEntry = '';
+        let setupPinEntry = '';
+        let setupPinFirst = '';
+        let setupPinStep = 1; // 1=enter, 2=confirm
+
+        function updatePinDots(entry, prefix) {
+            for (let i = 0; i < 4; i++) {
+                const dot = document.getElementById(`${prefix}-dot-${i}`);
+                if (i < entry.length) {
+                    dot.style.background = 'linear-gradient(135deg, #667eea, #764ba2)';
+                    dot.style.borderColor = '#667eea';
+                } else {
+                    dot.style.background = '';
+                    dot.style.borderColor = '#cbd5e1';
+                }
+            }
+        }
+
+        function pinKey(k) {
+            if (pinEntry.length >= 4) return;
+            pinEntry += k;
+            updatePinDots(pinEntry, 'pin');
+            document.getElementById('pin-error').innerText = '';
+            if (pinEntry.length === 4) {
+                setTimeout(() => {
+                    const saved = localStorage.getItem('sw_pin');
+                    if (pinEntry === saved) {
+                        document.getElementById('pin-lock-page').classList.add('hidden');
+                        pinEntry = '';
+                        updatePinDots('', 'pin');
+                    } else {
+                        document.getElementById('pin-error').innerText = 'Wrong PIN! Try again.';
+                        pinEntry = '';
+                        updatePinDots('', 'pin');
+                        const dots = document.querySelectorAll('[id^="pin-dot-"]');
+                        dots.forEach(d => { d.style.borderColor = '#ef4444'; });
+                        setTimeout(() => dots.forEach(d => { d.style.borderColor = '#cbd5e1'; }), 600);
+                    }
+                }, 150);
+            }
+        }
+
+        function pinBackspace() {
+            pinEntry = pinEntry.slice(0, -1);
+            updatePinDots(pinEntry, 'pin');
+        }
+
+        function pinForgot() {
+            if (confirm('Reset PIN? You will need to set a new one after login.')) {
+                localStorage.removeItem('sw_pin');
+                document.getElementById('pin-lock-page').classList.add('hidden');
+            }
+        }
+
+        function setupPinKey(k) {
+            if (setupPinEntry.length >= 4) return;
+            setupPinEntry += k;
+            updatePinDots(setupPinEntry, 'setup');
+            document.getElementById('pin-setup-error').innerText = '';
+            if (setupPinEntry.length === 4) {
+                setTimeout(() => {
+                    if (setupPinStep === 1) {
+                        setupPinFirst = setupPinEntry;
+                        setupPinEntry = '';
+                        updatePinDots('', 'setup');
+                        setupPinStep = 2;
+                        document.getElementById('pin-setup-title').innerText = 'Confirm PIN';
+                        document.getElementById('pin-setup-sub').innerText = 'Enter the same PIN again';
+                    } else {
+                        if (setupPinEntry === setupPinFirst) {
+                            localStorage.setItem('sw_pin', setupPinEntry);
+                            document.getElementById('pin-setup-page').classList.add('hidden');
+                            setupPinEntry = ''; setupPinFirst = ''; setupPinStep = 1;
+                            updatePinDots('', 'setup');
+                            document.getElementById('pin-setup-title').innerText = 'Set a PIN';
+                            document.getElementById('pin-setup-sub').innerText = 'Choose a 4-digit PIN to secure your app';
+                            showToast('PIN set successfully! 🔒', 'success');
+                        } else {
+                            document.getElementById('pin-setup-error').innerText = 'PINs do not match! Try again.';
+                            setupPinEntry = ''; setupPinFirst = ''; setupPinStep = 1;
+                            updatePinDots('', 'setup');
+                            document.getElementById('pin-setup-title').innerText = 'Set a PIN';
+                            document.getElementById('pin-setup-sub').innerText = 'Choose a 4-digit PIN to secure your app';
+                        }
+                    }
+                }, 150);
+            }
+        }
+
+        function setupPinBackspace() {
+            setupPinEntry = setupPinEntry.slice(0, -1);
+            updatePinDots(setupPinEntry, 'setup');
+        }
+
+        function skipPinSetup() {
+            document.getElementById('pin-setup-page').classList.add('hidden');
+            setupPinEntry = ''; setupPinFirst = ''; setupPinStep = 1;
+        }
+
+        function openPinSetup() {
+            setupPinEntry = ''; setupPinFirst = ''; setupPinStep = 1;
+            updatePinDots('', 'setup');
+            document.getElementById('pin-setup-title').innerText = 'Set a PIN';
+            document.getElementById('pin-setup-sub').innerText = 'Choose a 4-digit PIN to secure your app';
+            document.getElementById('pin-setup-error').innerText = '';
+            document.getElementById('pin-setup-page').classList.remove('hidden');
+        }
+
+        function removePinLock() {
+            if (confirm('Remove PIN lock?')) {
+                localStorage.removeItem('sw_pin');
+                showToast('PIN removed', 'success');
+            }
+        }
+
+        // LOGIC PRESERVED (AS REQUESTED)
+        let isSignup = false; let isRecovering = false;
+        let currentUserEmail = localStorage.getItem('sw_user_email');
+        let users = JSON.parse(localStorage.getItem('sw_accounts')) || {};
+        let allTxs = JSON.parse(localStorage.getItem('sw_data')) || []; 
+        let barChart, lineChart, donutChart;
+        let filterView = 'week';
+        let currentPeriodDate = new Date();
+
+        // Toast Notification
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            const icon = type === 'success' ? 'check_circle' : 'error';
+            const color = type === 'success' ? '#10b981' : '#ef4444';
+            toast.innerHTML = `<span class="material-icons" style="color: ${color};">${icon}</span><span style="color: #1e293b; font-weight: 600;">${message}</span>`;
+            document.body.appendChild(toast);
+            setTimeout(() => { toast.style.animation = 'slideIn 0.3s ease reverse'; setTimeout(() => toast.remove(), 300); }, 3000);
+        }
+
+        // Logout Function Fix
+        function logoutUser() {
+            if(confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('sw_user_email');
+                currentUserEmail = null;
+                showToast('Logged out successfully', 'success');
+                setTimeout(() => location.reload(), 500);
+            }
+        } 
+
+        window.onload = () => { 
+            if (currentUserEmail && users[currentUserEmail]) {
+                loadDataFromDB();
+                showPage('dashboard-page');
+                const savedPin = localStorage.getItem('sw_pin');
+                if (savedPin) {
+                    pinEntry = '';
+                    updatePinDots('', 'pin');
+                    document.getElementById('pin-error').innerText = '';
+                    document.getElementById('pin-lock-page').classList.remove('hidden');
+                }
+            } else {
+                showPage('auth-page');
+            }
+            document.getElementById('date-input').valueAsDate = new Date();
+        };
+
+        function toggleAuthMode() {
+            isSignup = !isSignup; isRecovering = false;
+            document.getElementById('auth-title').innerText = isSignup ? "Create Account" : "SpendWise";
+            document.getElementById('auth-name').classList.toggle('hidden', !isSignup);
+            document.getElementById('auth-master').classList.toggle('hidden', !isSignup);
+            document.getElementById('auth-pass').classList.remove('hidden');
+            document.getElementById('auth-btn').innerText = isSignup ? "Sign Up" : "Login";
+        }
+        function openRecovery() {
+            isRecovering = true;
+            document.getElementById('auth-title').innerText = "Recover Password";
+            document.getElementById('auth-master').classList.remove('hidden');
+            document.getElementById('auth-pass').classList.add('hidden');
+            document.getElementById('auth-btn').innerText = "Show Password";
+        }
+        document.getElementById('auth-form').onsubmit = (e) => {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            const pass = document.getElementById('auth-pass').value;
+            const master = document.getElementById('auth-master').value;
+            if (isRecovering) {
+                if (users[email] && users[email].master === master) { alert("Verified! Password: " + users[email].pass); location.reload(); } else { alert("Wrong Recovery Key!"); }
+                return;
+            }
+            if (isSignup) {
+                users[email] = { name: document.getElementById('auth-name').value || "User", pass, master };
+                localStorage.setItem('sw_accounts', JSON.stringify(users));
+                alert("Account created!"); toggleAuthMode();
+            } else {
+                if (users[email] && users[email].pass === pass) {
+                    currentUserEmail = email; localStorage.setItem('sw_user_email', email);
+                    showPage('dashboard-page');
+                } else { alert("Wrong email or password!"); }
+            }
+        };
+        async function loadDataFromDB() {
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                const response = await fetch(`/get_all/${currentUserEmail}`, { signal: controller.signal });
+                clearTimeout(timeoutId);
+                if (response.ok) {
+                    const dbData = await response.json();
+                    allTxs = allTxs.filter(t => t.user !== currentUserEmail).concat(dbData.map(t => ({...t, user: currentUserEmail})));
+                    localStorage.setItem('sw_data', JSON.stringify(allTxs));
+                }
+            } catch (err) {
+                console.log("DB not available, using localStorage");
+            }
+        }
+
+        async function performOCR(input) {
+            if (!input.files[0]) return;
+            const status = document.getElementById('ai-status');
+            const amtInput = document.getElementById('amt-input');
+            const noteInput = document.getElementById('note-input');
+            const catInput = document.getElementById('cat-input');
+            status.innerHTML = '<span class="loader"></span> Scanning Bill...';
+            try {
+                const result = await Tesseract.recognize(input.files[0], 'eng');
+                let fullText = result.data.text.toUpperCase();
+                let rawTextNumbers = fullText.replace(/,/g, ''); 
+                let detectedTotal = 0;
+                const totalRegex = /(?:TOTAL|NET|PAYABLE|GRAND|AMT)[\s:]*([0-9]+\.[0-9]{2}|[0-9]{2,5})/i;
+                const match = rawTextNumbers.match(totalRegex);
+                if (match) detectedTotal = parseFloat(match[1]);
+                else {
+                    const allDecimals = rawTextNumbers.match(/\d+\.\d{2}/g);
+                    if (allDecimals) detectedTotal = parseFloat(allDecimals[allDecimals.length - 1]);
+                }
+                let finalDescription = "Receipt"; 
+                const itemKeywords = {
+                    "Pharmacy Bill": ["PHARMA", "MEDICINE", "TABLET", "CAPSULE", "HEALTH", "SYRUP", "OINTMENT", "MEDICAL", "DOCTOR", "SURGICAL"],
+                    "Grocery Bill": ["SOAP", "OIL", "SUGAR", "RICE", "DAAL", "MILK", "PROVISION", "MART", "DETERGENT", "PASTE", "SALT"],
+                    "Textile Bill": ["SILKS", "SAREE", "CLOTH", "READYMADE", "DRESS", "SHIRT", "PANT", "GARMENTS", "TEXTILE", "FABRIC"],
+                    "Food Bill": ["HOTEL", "RESTAURANT", "BIRYANI", "COFFEE", "MEALS", "CAFE", "BAKERY", "FOOD", "DINING", "TIFFIN"]
+                };
+                for (let type in itemKeywords) {
+                    if (itemKeywords[type].some(word => fullText.includes(word))) {
+                        finalDescription = type;
+                        if (type === "Grocery Bill" || type === "Food Bill") catInput.value = "Food";
+                        else if (type === "Textile Bill") catInput.value = "Shopping";
+                        else if (type === "Pharmacy Bill") catInput.value = "Others";
+                        break;
+                    }
+                }
+                noteInput.value = finalDescription;
+                if (detectedTotal > 0) {
+                    amtInput.value = detectedTotal;
+                    status.innerHTML = `<span style="color: #10b981;">✅ Found: ₹${detectedTotal}</span>`;
+                    showToast(`Bill scanned: ₹${detectedTotal}`, 'success');
+                } else { status.innerHTML = "Enter manually."; }
+            } catch (err) { status.innerHTML = "Scan Error."; showToast('Scan failed', 'error'); }
+        }
+
+        function startVoiceInput() {
+            const Speech = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!Speech) return alert("Not supported");
+            const rec = new Speech();
+            rec.lang = 'en-IN';
+            const status = document.getElementById('ai-status');
+            rec.onstart = () => status.innerText = "Listening...";
+            rec.onresult = (e) => {
+                const text = e.results[0][0].transcript.toLowerCase();
+                status.innerText = "Heard: " + text;
+                const amtMatch = text.match(/\d+/);
+                if (amtMatch) document.getElementById('amt-input').value = amtMatch[0];
+                const voiceMap = [
+                    { keywords: ["bus", "auto", "train", "petrol", "transport"], desc: "Transport Bill", cat: "Transport" },
+                    { keywords: ["biryani", "hotel", "food", "dinner"], desc: "Food Bill", cat: "Food" },
+                    { keywords: ["salary", "income", "profit"], desc: "Income Entry", cat: "Income" }
+                ];
+                let found = false;
+                for (let map of voiceMap) {
+                    if (map.keywords.some(word => text.includes(word))) {
+                        document.getElementById('note-input').value = map.desc;
+                        document.getElementById('cat-input').value = map.cat;
+                        found = true; break;
+                    }
+                }
+                if (!found) { document.getElementById('note-input').value = text.replace(/\d+/g, '').trim() || "Voice Entry"; document.getElementById('cat-input').value = "Others"; }
+            };
+            rec.start();
+        }
+
+        function refreshDashboard() {
+            if (!currentUserEmail) return;
+            let userData = allTxs.filter(t => t.user === currentUserEmail);
+            
+            // Filter based on current filterView
+            if (filterView === 'week') {
+                userData = filterByWeek(userData, currentPeriodDate);
+            } else if (filterView === 'month') {
+                userData = filterByMonth(userData, currentPeriodDate);
+            }
+            // For 'all', no filtering
+            
+            const inc = userData.filter(t => t.cat === 'Income').reduce((a,b)=>a+b.amt, 0);
+            const exp = userData.filter(t => t.cat !== 'Income').reduce((a,b)=>a+b.amt, 0);
+            document.getElementById('total-balance').innerText = `₹${(inc-exp).toFixed(2)}`;
+            document.getElementById('dash-income').innerText = `₹${inc.toFixed(2)}`;
+            document.getElementById('dash-expense').innerText = `₹${exp.toFixed(2)}`;
+            document.getElementById('user-display-name').innerText = users[currentUserEmail]?.name || "Kaviya";
+            
+            // Header Stats
+            document.getElementById('total-txs').innerText = userData.length;
+            const daysInPeriod = filterView === 'week' ? 7 : 30;
+            document.getElementById('avg-daily').innerText = `₹${(exp / daysInPeriod).toFixed(0)}`;
+            const savingsRate = inc > 0 ? ((inc - exp) / inc * 100).toFixed(0) : 0;
+            document.getElementById('savings-rate').innerText = `${savingsRate}%`;
+            
+            renderCharts(userData);
+            renderTransactions(userData);
+            updatePeriodLabel();
+            renderInsights(userData);
+        }
+
+        function renderCharts(data) {
+            Chart.defaults.color = '#64748b';
+            if (barChart) barChart.destroy();
+            if (lineChart) lineChart.destroy();
+            if (donutChart) donutChart.destroy();
+
+            const weekLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+            const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            let labels, chartData;
+            if (filterView === 'week') {
+                labels = weekLabels;
+                chartData = new Array(7).fill(0);
+                data.filter(t => t.cat !== 'Income').forEach(t => {
+                    const d = new Date(t.date);
+                    chartData[d.getDay()] += t.amt;
+                });
+            } else if (filterView === 'month') {
+                labels = monthLabels;
+                chartData = new Array(12).fill(0);
+                data.filter(t => t.cat !== 'Income').forEach(t => {
+                    const d = new Date(t.date);
+                    chartData[d.getMonth()] += t.amt;
+                });
+            } else { // all
+                labels = monthLabels;
+                chartData = new Array(12).fill(0);
+                data.filter(t => t.cat !== 'Income').forEach(t => {
+                    const d = new Date(t.date);
+                    if (d.getFullYear() === new Date().getFullYear()) {
+                        chartData[d.getMonth()] += t.amt;
+                    }
+                });
+            }
+
+            lineChart = new Chart(document.getElementById('lineChart'), {
+                type: 'line',
+                data: { labels, datasets: [{ data: chartData, borderColor: '#667eea', tension: 0.4, fill: true, backgroundColor: 'rgba(102, 126, 234, 0.1)', pointRadius: 0 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { grid: { color: 'rgba(0,0,0,0.05)' } } } }
+            });
+
+            barChart = new Chart(document.getElementById('barChart'), {
+                type: 'bar',
+                data: { labels, datasets: [{ data: chartData, backgroundColor: '#667eea', borderRadius: 4 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { display: false }, x: { display: false } } }
+            });
+
+            const catTotals = {};
+            data.filter(t => t.cat !== 'Income').forEach(t => catTotals[t.cat] = (catTotals[t.cat] || 0) + t.amt);
+            const catColors = { 'Food': '#f59e0b', 'Transport': '#3b82f6', 'Bills': '#8b5cf6', 'Shopping': '#ec4899', 'Others': '#64748b' };
+            const catLabels = Object.keys(catTotals);
+            const catData = Object.values(catTotals);
+            const colors = catLabels.map(cat => catColors[cat] || '#64748b');
+            
+            donutChart = new Chart(document.getElementById('donutChart'), {
+                type: 'doughnut',
+                data: { labels: catLabels, datasets: [{ data: catData, backgroundColor: colors, borderWidth: 0 }] },
+                options: { responsive: true, maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: false } } }
+            });
+            
+            // Category Legend
+            const legendHTML = catLabels.map((cat, i) => {
+                const percent = ((catData[i] / catData.reduce((a,b)=>a+b,0)) * 100).toFixed(0);
+                return `<div class="flex items-center justify-between py-1">
+                    <div class="flex items-center gap-2">
+                        <div class="w-2 h-2 rounded-full" style="background: ${colors[i]};"></div>
+                        <span class="text-slate-400">${cat}</span>
+                    </div>
+                    <span class="font-bold text-slate-700">${percent}%</span>
+                </div>`;
+            }).join('');
+            document.getElementById('category-legend').innerHTML = legendHTML || '<p class="text-slate-500 text-center">No data</p>';
+        }
+
+        function renderTransactions(userData) {
+            const iconMap = { "Food": "restaurant", "Transport": "directions_car", "Bills": "receipt_long", "Shopping": "local_mall", "Others": "payments", "Income": "savings" };
+            const colorMap = { "Food": "bg-orange-500/10 text-orange-500", "Transport": "bg-blue-500/10 text-blue-500", "Bills": "bg-purple-500/10 text-purple-500", "Shopping": "bg-pink-500/10 text-pink-500", "Others": "bg-slate-500/10 text-slate-500", "Income": "bg-emerald-500/10 text-emerald-500" };
+
+            let headerText = "Transactions History";
+            if (filterView === 'week') headerText = "This Week's Transactions";
+            else if (filterView === 'month') headerText = "This Month's Transactions";
+            else headerText = "All Transactions";
+
+            document.getElementById('tx-list').innerHTML = `<h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3 mt-4">${headerText}</h3>` + 
+            userData.slice().reverse().map((t) => `
+                <div class="flex items-center justify-between p-4 rounded-2xl mb-3" style="background:#fff; border:1.5px solid #e2e8f0; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+                    <div class="flex items-center gap-3">
+                        <div class="w-11 h-11 rounded-xl ${colorMap[t.cat] || colorMap['Others']} flex items-center justify-center"><span class="material-icons text-xl">${iconMap[t.cat] || iconMap['Others']}</span></div>
+                        <div><p class="font-bold text-sm text-slate-800">${t.note}</p><p class="text-[10px] text-slate-400">${t.date}</p></div>
+                    </div>
+                    <div class="flex items-center gap-4">
+                        <p class="font-bold text-sm ${t.cat === 'Income' ? 'text-emerald-500' : 'text-rose-500'}">₹${t.amt.toFixed(2)}</p>
+                        <button onclick="deleteTx(${t.id})" class="text-slate-400"><span class="material-icons text-lg">delete</span></button>
+                    </div>
+                </div>`).join('');
+        }
+
+        // --- UPDATE PANNA VENDIYA PUDHU CODE ---
+async function saveEntry() {
+    const amtInput = document.getElementById('amt-input');
+    const noteInput = document.getElementById('note-input');
+    const catInput = document.getElementById('cat-input');
+    const dateInput = document.getElementById('date-input');
+    const saveBtn = document.getElementById('save-btn');
+    const saveText = document.getElementById('save-text');
+    const saveLoader = document.getElementById('save-loader');
+
+    const amt = parseFloat(amtInput.value);
+    const note = noteInput.value;
+    const cat = catInput.value;
+    const date = dateInput.value;
+
+    if(!amt || !note) { showToast('Enter amount and description!', 'error'); return; }
+
+    // Loading state
+    saveBtn.disabled = true;
+    saveText.classList.add('hidden');
+    saveLoader.classList.remove('hidden');
+
+    const payload = {
+        user: currentUserEmail,
+        amt: amt,
+        note: note,
+        cat: cat,
+        date: date
+    };
+
+    try {
+        const response = await fetch('/add', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+
+        if (response.ok) {
+            allTxs.push(payload);
+            localStorage.setItem('sw_data', JSON.stringify(allTxs));
+            
+            showToast('Transaction saved successfully!', 'success');
+            
+            amtInput.value = '';
+            noteInput.value = '';
+            
+            setTimeout(() => {
+                showPage('dashboard-page');
+                loadDataFromDB().then(() => refreshDashboard());
+            }, 500);
+        } else {
+            showToast('Server error! Try again.', 'error');
+        }
+    } catch (err) {
+        showToast('Connection failed! Check server.', 'error');
+    } finally {
+        saveBtn.disabled = false;
+        saveText.classList.remove('hidden');
+        saveLoader.classList.add('hidden');
+    }
+}
+
+// Download function-aiyum idhuku pakkathulayae add pannikonga
+function downloadCSV() {
+    if (!currentUserEmail) return alert("Please login first!");
+    window.location.href = `/download/${currentUserEmail}`;
+}
+
+        async function deleteTx(id) {
+            if(confirm("Delete this transaction?")) {
+                try {
+                    const response = await fetch(`/delete/${id}`, { method: 'DELETE' });
+                    if (response.ok) {
+                        allTxs = allTxs.filter(t => t.id !== id);
+                        localStorage.setItem('sw_data', JSON.stringify(allTxs));
+                        showToast('Transaction deleted', 'success');
+                        refreshDashboard();
+                    } else {
+                        showToast('Delete failed', 'error');
+                    }
+                } catch (err) {
+                    showToast('Connection failed', 'error');
+                }
+            }
+        }
+
+        function showPage(id) {
+            document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            
+            if (id === 'dashboard-page') {
+                refreshDashboard();
+                document.querySelectorAll('.nav-btn')[0].classList.add('active');
+            } else if (id === 'add-page') {
+                showRecentTransactions();
+                document.querySelectorAll('.nav-btn')[1].classList.add('active');
+            } else if (id === 'predictions-page') {
+                document.querySelectorAll('.nav-btn')[2].classList.add('active');
+            } else if (id === 'streaks-page') {
+                document.querySelectorAll('.nav-btn')[3].classList.add('active');
+            } else if (id === 'sms-page') {
+                document.querySelectorAll('.nav-btn')[4].classList.add('active');
+            } else if (id === 'insights-page') {
+                loadInsightsPage();
+                document.querySelectorAll('.nav-btn')[5].classList.add('active');
+            } else if (id === 'history-page') {
+                loadHistoryPage();
+                document.querySelectorAll('.nav-btn')[6].classList.add('active');
+            } else if (id === 'smart-page') {
+                loadSmartPage();
+                document.querySelectorAll('.nav-btn')[7].classList.add('active');
+            } else if (id === 'profile-page') {
+                loadProfileData();
+                document.querySelectorAll('.nav-btn')[8].classList.add('active');
+            }
+        }
+
+        function quickCategory(category, icon) {
+            document.getElementById('cat-input').value = category;
+            document.getElementById('note-input').focus();
+            showToast(`${category} selected`, 'success');
+        }
+
+        function handleNoteInput(val) {
+            if (val.length < 3) return;
+            const suggested = autoCategory(val);
+            if (suggested) {
+                document.getElementById('cat-input').value = suggested;
+                document.getElementById('ai-status').innerText = `🤖 Auto: ${suggested}`;
+                setTimeout(() => { document.getElementById('ai-status').innerText = ''; }, 2000);
+            }
+        }
+
+        function showRecentTransactions() {
+            if (!currentUserEmail) return;
+            const userTxs = allTxs.filter(t => t.user === currentUserEmail).slice(0, 5);
+            const iconMap = { "Food": "restaurant", "Transport": "directions_car", "Bills": "receipt_long", "Shopping": "local_mall", "Others": "payments", "Income": "savings" };
+            const colorMap = { "Food": "#f59e0b", "Transport": "#3b82f6", "Bills": "#8b5cf6", "Shopping": "#ec4899", "Others": "#64748b", "Income": "#10b981" };
+            
+            const html = userTxs.length > 0 ? userTxs.map(t => `
+                <div class="flex items-center justify-between p-2 rounded-lg" style="background:#f8fafc; border:1.5px solid #e2e8f0;">
+                    <div class="flex items-center gap-2">
+                        <span class="material-icons text-sm" style="color: ${colorMap[t.cat]};">${iconMap[t.cat]}</span>
+                        <div>
+                            <p class="text-[10px] text-slate-700 font-semibold">${t.note}</p>
+                            <p class="text-[8px] text-slate-400">${t.date}</p>
+                        </div>
+                    </div>
+                    <p class="text-[11px] font-bold ${t.cat === 'Income' ? 'text-emerald-500' : 'text-rose-500'}">₹${t.amt}</p>
+                </div>
+            `).join('') : '<p class="text-center text-slate-400 text-[10px] py-4">No transactions yet</p>';
+            
+            document.getElementById('recent-txs').innerHTML = html;
+        }
+
+        function changeView(v) { 
+            chartView = v; 
+            document.getElementById('week-btn').classList.toggle('active', v==='week');
+            document.getElementById('month-btn').classList.toggle('active', v==='month');
+            refreshDashboard(); 
+        }
+
+        function changeFilter(v) {
+            filterView = v;
+            document.getElementById('week-btn').classList.toggle('active', v==='week');
+            document.getElementById('month-btn').classList.toggle('active', v==='month');
+            document.getElementById('all-btn').classList.toggle('active', v==='all');
+            const nav = document.getElementById('period-nav');
+            if (v === 'all') {
+                nav.classList.add('hidden');
+            } else {
+                nav.classList.remove('hidden');
+            }
+            refreshDashboard();
+        }
+
+        function navigatePeriod(direction) {
+            if (filterView === 'week') {
+                currentPeriodDate.setDate(currentPeriodDate.getDate() + direction * 7);
+            } else if (filterView === 'month') {
+                currentPeriodDate.setMonth(currentPeriodDate.getMonth() + direction);
+            }
+            refreshDashboard();
+        }
+
+        function updatePeriodLabel() {
+            const label = document.getElementById('period-label');
+            if (filterView === 'week') {
+                const startOfWeek = new Date(currentPeriodDate);
+                startOfWeek.setDate(currentPeriodDate.getDate() - currentPeriodDate.getDay());
+                const endOfWeek = new Date(startOfWeek);
+                endOfWeek.setDate(startOfWeek.getDate() + 6);
+                label.innerText = `${startOfWeek.toDateString().split(' ').slice(1,3).join(' ')} - ${endOfWeek.toDateString().split(' ').slice(1,3).join(' ')}`;
+            } else if (filterView === 'month') {
+                label.innerText = currentPeriodDate.toLocaleString('default', { month: 'long', year: 'numeric' });
+            }
+        }
+
+        function filterByWeek(data, date) {
+            const startOfWeek = new Date(date);
+            startOfWeek.setDate(date.getDate() - date.getDay());
+            startOfWeek.setHours(0,0,0,0);
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(startOfWeek.getDate() + 6);
+            endOfWeek.setHours(23,59,59,999);
+            return data.filter(t => {
+                const txDate = new Date(t.date);
+                return txDate >= startOfWeek && txDate <= endOfWeek;
+            });
+        }
+
+        function filterByMonth(data, date) {
+            const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1);
+            const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+            endOfMonth.setHours(23,59,59,999);
+            return data.filter(t => {
+                const txDate = new Date(t.date);
+                return txDate >= startOfMonth && txDate <= endOfMonth;
+            });
+        }
+
+        async function loadPredictions() {
+            try {
+                const response = await fetch(`/get_predictions/${currentUserEmail}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('predicted-amount-page').innerText = `₹${data.predicted_amount}`;
+                    let trendText = '';
+                    if (data.trend === 'increasing') {
+                        trendText = `📈 Trending up from ₹${data.avg_last_3_months} avg`;
+                    } else if (data.trend === 'decreasing') {
+                        trendText = `📉 Trending down from ₹${data.avg_last_3_months} avg`;
+                    } else {
+                        trendText = `➡️ Stable at ₹${data.avg_last_3_months} avg`;
+                    }
+                    document.getElementById('prediction-trend-page').innerText = trendText;
+                }
+            } catch (err) {
+                console.log("Error loading predictions");
+            }
+        }
+
+        async function loadStreaks() {
+            try {
+                const response = await fetch(`/get_streaks/${currentUserEmail}`);
+                if (response.ok) {
+                    const data = await response.json();
+                    document.getElementById('current-streak-page').innerText = data.current_streak;
+                    document.getElementById('best-streak-page').innerText = data.best_streak;
+                    let message = '';
+                    if (data.current_streak >= 7) {
+                        message = '🎉 Amazing! Keep it up!';
+                    } else if (data.current_streak >= 3) {
+                        message = '💪 Great progress!';
+                    } else if (data.current_streak > 0) {
+                        message = '👍 Good start!';
+                    } else {
+                        message = `Stay under ₹${data.daily_budget}/day to start streak`;
+                    }
+                    document.getElementById('streak-message-page').innerText = message;
+                }
+            } catch (err) {
+                console.log("Error loading streaks");
+            }
+        }
+
+        function downloadPDF() {
+            if (!currentUserEmail) { showToast('Please login first!', 'error'); return; }
+            window.location.href = `/generate_pdf/${currentUserEmail}`;
+            showToast('Generating PDF report...', 'success');
+        }
+
+        function loadProfileData() {
+            if (!currentUserEmail) return;
+            const userData = allTxs.filter(t => t.user === currentUserEmail);
+            const inc = userData.filter(t => t.cat === 'Income').reduce((a,b)=>a+b.amt, 0);
+            const exp = userData.filter(t => t.cat !== 'Income').reduce((a,b)=>a+b.amt, 0);
+            
+            document.getElementById('profile-name').innerText = users[currentUserEmail]?.name || 'User';
+            document.getElementById('profile-email').innerText = currentUserEmail;
+            document.getElementById('profile-total-txs').innerText = userData.length;
+            document.getElementById('profile-total-income').innerText = `₹${inc.toFixed(2)}`;
+            document.getElementById('profile-total-expense').innerText = `₹${exp.toFixed(2)}`;
+            document.getElementById('profile-balance').innerText = `₹${(inc - exp).toFixed(2)}`;
+            
+            const profileData = JSON.parse(localStorage.getItem(`profile_${currentUserEmail}`) || '{}');
+            if (profileData.pic) {
+                document.getElementById('profile-pic').innerHTML = `<img src="${profileData.pic}" class="w-24 h-24 rounded-full object-cover">`;
+                document.getElementById('pic-delete-btn').classList.remove('hidden');
+                document.getElementById('pic-upload-btn').classList.add('hidden');
+            }
+            document.getElementById('profile-dob').value = profileData.dob || '';
+            document.getElementById('profile-phone').value = profileData.phone || '';
+            document.getElementById('profile-dob').disabled = true;
+            document.getElementById('profile-dob').style.opacity = '0.6';
+            document.getElementById('profile-phone').disabled = true;
+            document.getElementById('profile-phone').style.opacity = '0.6';
+            document.getElementById('edit-info-btn').classList.remove('hidden');
+            document.getElementById('save-info-btn').classList.add('hidden');
+        }
+
+        function uploadProfilePic(input) {
+            if (!input.files[0]) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const pic = e.target.result;
+                const profileData = JSON.parse(localStorage.getItem(`profile_${currentUserEmail}`) || '{}');
+                profileData.pic = pic;
+                localStorage.setItem(`profile_${currentUserEmail}`, JSON.stringify(profileData));
+                document.getElementById('profile-pic').innerHTML = `<img src="${pic}" class="w-24 h-24 rounded-full object-cover">`;
+                document.getElementById('pic-delete-btn').classList.remove('hidden');
+                document.getElementById('pic-upload-btn').classList.add('hidden');
+                showToast('Profile picture updated!', 'success');
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+
+        function deleteProfilePic() {
+            if (!confirm('Delete profile picture?')) return;
+            const profileData = JSON.parse(localStorage.getItem(`profile_${currentUserEmail}`) || '{}');
+            delete profileData.pic;
+            localStorage.setItem(`profile_${currentUserEmail}`, JSON.stringify(profileData));
+            document.getElementById('profile-pic').innerHTML = `<span class="material-icons text-white text-5xl">person</span>`;
+            document.getElementById('pic-delete-btn').classList.add('hidden');
+            document.getElementById('pic-upload-btn').classList.remove('hidden');
+            showToast('Profile picture removed!', 'success');
+        }
+
+        function editPersonalInfo() {
+            document.getElementById('profile-dob').disabled = false;
+            document.getElementById('profile-dob').style.opacity = '1';
+            document.getElementById('profile-phone').disabled = false;
+            document.getElementById('profile-phone').style.opacity = '1';
+            document.getElementById('edit-info-btn').classList.add('hidden');
+            document.getElementById('save-info-btn').classList.remove('hidden');
+        }
+
+        function savePersonalInfo() {
+            const dob = document.getElementById('profile-dob').value;
+            const phone = document.getElementById('profile-phone').value;
+            
+            const profileData = JSON.parse(localStorage.getItem(`profile_${currentUserEmail}`) || '{}');
+            profileData.dob = dob;
+            profileData.phone = phone;
+            localStorage.setItem(`profile_${currentUserEmail}`, JSON.stringify(profileData));
+            document.getElementById('profile-dob').disabled = true;
+            document.getElementById('profile-dob').style.opacity = '0.6';
+            document.getElementById('profile-phone').disabled = true;
+            document.getElementById('profile-phone').style.opacity = '0.6';
+            document.getElementById('edit-info-btn').classList.remove('hidden');
+            document.getElementById('save-info-btn').classList.add('hidden');
+            showToast('Personal info saved!', 'success');
+        }
+
+        async function parseSMS() {
+            const smsText = document.getElementById('sms-input').value;
+            if (!smsText) { showToast('Enter SMS text!', 'error'); return; }
+            const parseBtn = document.getElementById('parse-btn');
+            const parseText = document.getElementById('parse-text');
+            const parseLoader = document.getElementById('parse-loader');
+            parseBtn.disabled = true;
+            parseText.classList.add('hidden');
+            parseLoader.classList.remove('hidden');
+            try {
+                const response = await fetch('/parse_sms', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ user: currentUserEmail, sms_text: smsText })
+                });
+                const data = await response.json();
+                if (data.status === 'success') {
+                    document.getElementById('parsed-amt').innerText = `₹${data.amount}`;
+                    document.getElementById('parsed-type').innerText = data.type;
+                    document.getElementById('parsed-cat').innerText = data.category;
+                    document.getElementById('parsed-note').innerText = data.note;
+                    document.getElementById('parsed-result').classList.remove('hidden');
+                    showToast('Transaction added successfully!', 'success');
+                    document.getElementById('sms-input').value = '';
+                    setTimeout(() => {
+                        showPage('dashboard-page');
+                        loadDataFromDB().then(() => refreshDashboard());
+                    }, 2000);
+                } else {
+                    showToast(data.message, 'error');
+                }
+            } catch (err) {
+                showToast('Error parsing SMS', 'error');
+            } finally {
+                parseBtn.disabled = false;
+                parseText.classList.remove('hidden');
+                parseLoader.classList.add('hidden');
+            }
+        }
+
+        const originalShowPage = showPage;
+        showPage = function(id) {
+            originalShowPage(id);
+            if (id === 'predictions-page') {
+                loadPredictions();
+            } else if (id === 'streaks-page') {
+                loadStreaks();
+            }
+        };
+
+        async function showSMSHistory() {
+            try {
+                const response = await fetch(`/get_sms_history/${currentUserEmail}`);
+                if (response.ok) {
+                    const smsData = await response.json();
+                    const typeColors = { "Income": "text-emerald-400", "Expense": "text-rose-400" };
+                    const typeIcons = { "Income": "savings", "Expense": "payments" };
+                    
+                    const html = smsData.length > 0 ? smsData.map(sms => `
+                        <div class="card p-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-10 h-10 rounded-lg flex items-center justify-center" style="background: ${sms.type === 'Income' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(244, 63, 94, 0.2)'};">
+                                        <span class="material-icons ${typeColors[sms.type]}">${typeIcons[sms.type]}</span>
+                                    </div>
+                                    <div>
+                                        <p class="font-bold text-slate-700">${sms.type}</p>
+                                        <p class="text-xs text-slate-500">${sms.date}</p>
+                                    </div>
+                                </div>
+                                <p class="text-lg font-bold ${typeColors[sms.type]}">₹${sms.amount.toFixed(2)}</p>
+                            </div>
+                        </div>
+                    `).join('') : '<div class="card p-6 text-center"><p class="text-slate-400 text-sm">No SMS transactions yet</p></div>';
+                    
+                    document.getElementById('sms-history-list').innerHTML = html;
+                    document.getElementById('sms-history-modal').classList.remove('hidden');
+                }
+            } catch (err) {
+                showToast('Error loading SMS history', 'error');
+            }
+        }
+
+        function renderInsights(userData) {
+            // Fire overspend toasts on dashboard load (once per session)
+            const cats = ['Food', 'Transport', 'Bills', 'Shopping', 'Others'];
+            const now = new Date();
+            const thisWeekStart = new Date(now); thisWeekStart.setDate(now.getDate() - now.getDay()); thisWeekStart.setHours(0,0,0,0);
+            const allUser = allTxs.filter(t => t.user === currentUserEmail && t.cat !== 'Income');
+            const thisWeek = allUser.filter(t => new Date(t.date) >= thisWeekStart);
+            const fourWeeksAgo = new Date(thisWeekStart); fourWeeksAgo.setDate(thisWeekStart.getDate() - 28);
+            const last4Weeks = allUser.filter(t => new Date(t.date) >= fourWeeksAgo && new Date(t.date) < thisWeekStart);
+            const alertKey = `sw_alerted_${currentUserEmail}_${thisWeekStart.toDateString()}`;
+            if (!sessionStorage.getItem(alertKey)) {
+                const alerts = cats.filter(cat => {
+                    const thisAmt = thisWeek.filter(t => t.cat === cat).reduce((a,b) => a + b.amt, 0);
+                    const avgAmt = last4Weeks.filter(t => t.cat === cat).reduce((a,b) => a + b.amt, 0) / 4;
+                    return avgAmt > 0 && thisAmt > avgAmt * 1.5;
+                });
+                if (alerts.length > 0) {
+                    alerts.forEach((cat, i) => setTimeout(() => showToast(`🔔 Overspending on ${cat} this week!`, 'error'), 500 + i * 600));
+                    sessionStorage.setItem(alertKey, '1');
+                }
+            }
+        }
+
+        function loadHistoryPage() {
+            window._historyAll = allTxs.filter(t => t.user === currentUserEmail).slice().reverse();
+            filterHistory();
+        }
+
+        function filterHistory() {
+            const search = (document.getElementById('history-search').value || '').toLowerCase();
+            const cat = document.getElementById('history-cat-filter').value;
+            const iconMap = { Food: 'restaurant', Transport: 'directions_car', Bills: 'receipt_long', Shopping: 'local_mall', Others: 'payments', Income: 'savings' };
+            const colorMap = { Food: 'bg-orange-500/10 text-orange-500', Transport: 'bg-blue-500/10 text-blue-500', Bills: 'bg-purple-500/10 text-purple-500', Shopping: 'bg-pink-500/10 text-pink-500', Others: 'bg-slate-500/10 text-slate-500', Income: 'bg-emerald-500/10 text-emerald-500' };
+            const data = (window._historyAll || []).filter(t =>
+                (!cat || t.cat === cat) &&
+                (!search || t.note.toLowerCase().includes(search) || t.date.includes(search))
+            );
+            document.getElementById('history-list').innerHTML = data.length > 0 ? data.map(t => `
+                <div class="flex items-center justify-between p-4 rounded-2xl mb-1" style="background:#fff; border:1.5px solid #e2e8f0; box-shadow:0 2px 8px rgba(0,0,0,0.05);">
+                    <div class="flex items-center gap-3">
+                        <div class="w-11 h-11 rounded-xl ${colorMap[t.cat] || colorMap.Others} flex items-center justify-center"><span class="material-icons text-xl">${iconMap[t.cat] || iconMap.Others}</span></div>
+                        <div><p class="font-bold text-slate-800">${t.note}</p><p class="text-[10px] text-slate-400">${t.date} &nbsp;·&nbsp; ${t.cat}</p></div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <p class="font-bold ${t.cat === 'Income' ? 'text-emerald-500' : 'text-rose-500'}">₹${t.amt.toFixed(2)}</p>
+                        <button onclick="deleteTx(${t.id}); loadHistoryPage();" class="text-slate-400"><span class="material-icons text-lg">delete</span></button>
+                    </div>
+                </div>`).join('') : '<p class="text-center text-slate-400 py-10">No transactions found.</p>';
+        }
+
+        function loadInsightsPage() {
+            const cats = ['Food', 'Transport', 'Bills', 'Shopping', 'Others'];
+            const catColors = { Food: '#f59e0b', Transport: '#3b82f6', Bills: '#8b5cf6', Shopping: '#ec4899', Others: '#64748b' };
+            const now = new Date();
+            const thisWeekStart = new Date(now); thisWeekStart.setDate(now.getDate() - now.getDay()); thisWeekStart.setHours(0,0,0,0);
+            const lastWeekStart = new Date(thisWeekStart); lastWeekStart.setDate(thisWeekStart.getDate() - 7);
+            const lastWeekEnd = new Date(thisWeekStart); lastWeekEnd.setMilliseconds(-1);
+            const fourWeeksAgo = new Date(thisWeekStart); fourWeeksAgo.setDate(thisWeekStart.getDate() - 28);
+
+            const allUser = allTxs.filter(t => t.user === currentUserEmail && t.cat !== 'Income');
+            const thisWeek = allUser.filter(t => new Date(t.date) >= thisWeekStart);
+            const lastWeek = allUser.filter(t => new Date(t.date) >= lastWeekStart && new Date(t.date) <= lastWeekEnd);
+            const last4Weeks = allUser.filter(t => new Date(t.date) >= fourWeeksAgo && new Date(t.date) < thisWeekStart);
+
+            const insights = [], overspends = [], avgs = [];
+
+            cats.forEach(cat => {
+                const thisAmt = thisWeek.filter(t => t.cat === cat).reduce((a,b) => a + b.amt, 0);
+                const lastAmt = lastWeek.filter(t => t.cat === cat).reduce((a,b) => a + b.amt, 0);
+                const avgAmt = last4Weeks.filter(t => t.cat === cat).reduce((a,b) => a + b.amt, 0) / 4;
+                const color = catColors[cat];
+
+                if (lastAmt > 0 && thisAmt > 0) {
+                    const diff = ((thisAmt - lastAmt) / lastAmt * 100).toFixed(0);
+                    if (Math.abs(diff) >= 10) {
+                        const arrow = diff > 0 ? 'arrow_upward' : 'arrow_downward';
+                        const cls = diff > 0 ? '#ef4444' : '#10b981';
+                        const word = diff > 0 ? 'more' : 'less';
+                        insights.push(`<div class="flex items-center gap-3 p-3 rounded-xl" style="background:#f8fafc;border-left:3px solid ${color};">
+                            <span class="material-icons text-sm" style="color:${cls}">${arrow}</span>
+                            <div><p class="text-slate-700">You spent <span class="font-bold" style="color:${cls}">${Math.abs(diff)}% ${word}</span> on <span class="font-bold text-slate-800">${cat}</span> this week</p>
+                            <p class="text-slate-400 mt-0.5">This week: ₹${thisAmt.toFixed(0)} &nbsp;|&nbsp; Last week: ₹${lastAmt.toFixed(0)}</p></div>
+                        </div>`);
+                    }
+                }
+
+                if (avgAmt > 0 && thisAmt > avgAmt * 1.5) {
+                    overspends.push(`<div class="flex items-center gap-3 p-3 rounded-xl" style="background:#fff1f2;border-left:3px solid #ef4444;">
+                        <span class="material-icons text-sm text-rose-400">warning</span>
+                        <div><p class="font-bold text-slate-700">${cat}</p>
+                        <p class="text-slate-500">₹${thisAmt.toFixed(0)} this week vs ₹${avgAmt.toFixed(0)} avg — <span class="text-rose-500 font-bold">+${(((thisAmt-avgAmt)/avgAmt)*100).toFixed(0)}% over avg</span></p></div>
+                    </div>`);
+                }
+
+                if (avgAmt > 0) {
+                    avgs.push(`<div class="flex items-center justify-between p-3 rounded-xl" style="background:#f8fafc;border:1.5px solid #e2e8f0;">
+                        <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full" style="background:${color};"></div><span class="text-slate-600 font-medium">${cat}</span></div>
+                        <span class="font-bold text-slate-800">₹${avgAmt.toFixed(0)}/week</span>
+                    </div>`);
+                }
+            });
+
+            document.getElementById('insights-list').innerHTML = insights.length > 0 ? insights.join('') : '<p class="text-slate-500 text-xs text-center py-4">No significant changes this week.</p>';
+            
+            const ovCard = document.getElementById('overspend-card');
+            if (overspends.length > 0) {
+                document.getElementById('overspend-list').innerHTML = overspends.join('');
+                ovCard.classList.remove('hidden');
+            } else {
+                ovCard.classList.add('hidden');
+            }
+
+            document.getElementById('avg-list').innerHTML = avgs.length > 0 ? avgs.join('') : '<p class="text-slate-500 text-xs text-center py-4">Not enough data yet.</p>';
+        }
+
+        function closeSMSHistory() {
+            document.getElementById('sms-history-modal').classList.add('hidden');
+            showPage('dashboard-page');
+        }
+
+        // ===== SMART FEATURES =====
+
+        // Auto-categorize
+        function autoCategory(note) {
+            const n = note.toLowerCase();
+            if (/swiggy|zomato|food|hotel|biryani|restaurant|cafe|coffee|lunch|dinner|breakfast|tiffin|mess/.test(n)) return 'Food';
+            if (/uber|ola|bus|auto|train|petrol|diesel|fuel|metro|cab|travel|transport/.test(n)) return 'Transport';
+            if (/rent|electricity|bill|water|wifi|internet|mobile|recharge|emi|loan/.test(n)) return 'Bills';
+            if (/amazon|flipkart|mall|shop|cloth|dress|shirt|pant|shoes|myntra/.test(n)) return 'Shopping';
+            if (/salary|income|credit|profit|bonus|freelance|payment received/.test(n)) return 'Income';
+            return null;
+        }
+
+        // Financial Health Score
+        function calcHealthScore() {
+            if (!currentUserEmail) return 0;
+            const now = new Date();
+            const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+            const userData = allTxs.filter(t => t.user === currentUserEmail);
+            const monthData = userData.filter(t => new Date(t.date) >= monthStart);
+            const inc = monthData.filter(t => t.cat === 'Income').reduce((a,b) => a+b.amt, 0);
+            const exp = monthData.filter(t => t.cat !== 'Income').reduce((a,b) => a+b.amt, 0);
+            if (inc === 0 && exp === 0) return 0;
+            let score = 50;
+            // Savings ratio (max +30)
+            const savingsRatio = inc > 0 ? (inc - exp) / inc : 0;
+            score += Math.min(30, savingsRatio * 60);
+            // Budget adherence (max +20)
+            const budgets = JSON.parse(localStorage.getItem(`sw_budgets_${currentUserEmail}`) || '{}');
+            const cats = ['Food','Transport','Bills','Shopping','Others'];
+            let budgetScore = 0, budgetCount = 0;
+            cats.forEach(cat => {
+                if (budgets[cat]) {
+                    budgetCount++;
+                    const spent = monthData.filter(t => t.cat === cat).reduce((a,b) => a+b.amt, 0);
+                    if (spent <= budgets[cat]) budgetScore += 1;
+                }
+            });
+            if (budgetCount > 0) score += (budgetScore / budgetCount) * 20;
+            return Math.min(100, Math.max(0, Math.round(score)));
+        }
+
+        function loadSmartPage() {
+            if (!currentUserEmail) return;
+
+            // Health Score
+            const score = calcHealthScore();
+            document.getElementById('health-score').innerText = score;
+            const arc = document.getElementById('health-arc');
+            setTimeout(() => { arc.setAttribute('stroke-dasharray', `${score} 100`); }, 100);
+            let label, tip, color;
+            if (score >= 80) { label = '🌟 Excellent'; tip = 'Great job! You are saving well and staying within budget.'; color = '#10b981'; }
+            else if (score >= 60) { label = '👍 Good'; tip = 'You are doing well. Try to save a bit more each month.'; color = '#3b82f6'; }
+            else if (score >= 40) { label = '⚠️ Average'; tip = 'Cut down on non-essential spending to improve your score.'; color = '#f59e0b'; }
+            else { label = '🔴 Poor'; tip = 'Your expenses are too high. Set budgets and track daily spending.'; color = '#ef4444'; }
+            document.getElementById('health-label').innerText = label;
+            document.getElementById('health-tip').innerText = tip;
+            arc.setAttribute('stroke', color);
+
+            // Budget List
+            const budgets = JSON.parse(localStorage.getItem(`sw_budgets_${currentUserEmail}`) || '{}');
+            const now = new Date();
+            const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+            const monthData = allTxs.filter(t => t.user === currentUserEmail && new Date(t.date) >= monthStart);
+            const cats = ['Food','Transport','Bills','Shopping','Others'];
+            const catColors = { Food:'#f59e0b', Transport:'#3b82f6', Bills:'#8b5cf6', Shopping:'#ec4899', Others:'#64748b' };
+            document.getElementById('budget-list').innerHTML = cats.map(cat => {
+                const spent = monthData.filter(t => t.cat === cat).reduce((a,b) => a+b.amt, 0);
+                const limit = budgets[cat] || '';
+                const pct = limit ? Math.min(100, (spent/limit)*100) : 0;
+                const barColor = pct > 90 ? '#ef4444' : pct > 70 ? '#f59e0b' : catColors[cat];
+                return `<div>
+                    <div class="flex justify-between mb-1">
+                        <span class="font-bold text-slate-700">${cat}</span>
+                        <div class="flex items-center gap-2">
+                            <span class="text-slate-400">₹${spent.toFixed(0)} spent</span>
+                            <input type="number" id="budget-${cat}" value="${limit}" placeholder="Set limit" class="w-24 p-1 rounded-lg text-center outline-none" style="font-size:12px;">
+                        </div>
+                    </div>
+                    ${limit ? `<div class="w-full rounded-full h-2" style="background:#e2e8f0;"><div class="h-2 rounded-full transition-all" style="background:${barColor};width:${pct}%;"></div></div>` : ''}
+                </div>`;
+            }).join('');
+
+            // Savings Goal
+            const goal = JSON.parse(localStorage.getItem(`sw_goal_${currentUserEmail}`) || 'null');
+            if (goal) {
+                const allInc = allTxs.filter(t => t.user === currentUserEmail && t.cat === 'Income').reduce((a,b) => a+b.amt, 0);
+                const allExp = allTxs.filter(t => t.user === currentUserEmail && t.cat !== 'Income').reduce((a,b) => a+b.amt, 0);
+                const saved = Math.max(0, allInc - allExp);
+                const pct = Math.min(100, (saved / goal.amt) * 100);
+                document.getElementById('goal-name-display').innerText = '🎯 ' + goal.name;
+                document.getElementById('goal-progress-text').innerText = `₹${saved.toFixed(0)} / ₹${goal.amt}`;
+                document.getElementById('goal-bar').style.width = pct + '%';
+                document.getElementById('goal-remaining').innerText = saved >= goal.amt ? '🎉 Goal achieved!' : `₹${(goal.amt - saved).toFixed(0)} more to go`;
+                document.getElementById('goal-display').classList.remove('hidden');
+                document.getElementById('goal-name').value = goal.name;
+                document.getElementById('goal-amt').value = goal.amt;
+            }
+
+            // Smart Budget Suggestion
+            const last3Months = allTxs.filter(t => {
+                if (t.user !== currentUserEmail || t.cat === 'Income') return false;
+                const d = new Date(t.date);
+                const diff = (now - d) / (1000*60*60*24);
+                return diff <= 90;
+            });
+            if (last3Months.length > 5) {
+                const suggestions = cats.map(cat => {
+                    const avg = last3Months.filter(t => t.cat === cat).reduce((a,b) => a+b.amt, 0) / 3;
+                    if (avg < 10) return null;
+                    const suggested = Math.round(avg * 0.9);
+                    return `<div class="flex items-center justify-between p-3 rounded-xl" style="background:#f8fafc;border:1.5px solid #e2e8f0;">
+                        <div class="flex items-center gap-2"><div class="w-2 h-2 rounded-full" style="background:${catColors[cat]};"></div><span class="font-bold text-slate-700">${cat}</span></div>
+                        <div class="text-right"><p class="text-slate-400">Avg: ₹${Math.round(avg)}</p><p class="font-bold text-indigo-600">Suggested: ₹${suggested}</p></div>
+                    </div>`;
+                }).filter(Boolean);
+                document.getElementById('smart-budget-list').innerHTML = suggestions.length > 0 ? suggestions.join('') : '<p class="text-slate-400 text-center py-3">Not enough data yet.</p>';
+            }
+        }
+
+        function saveBudgets() {
+            const cats = ['Food','Transport','Bills','Shopping','Others'];
+            const budgets = {};
+            cats.forEach(cat => {
+                const val = parseFloat(document.getElementById(`budget-${cat}`).value);
+                if (val > 0) budgets[cat] = val;
+            });
+            localStorage.setItem(`sw_budgets_${currentUserEmail}`, JSON.stringify(budgets));
+            showToast('Budgets saved! 💰', 'success');
+            loadSmartPage();
+            // Check overspend
+            const now = new Date();
+            const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+            const monthData = allTxs.filter(t => t.user === currentUserEmail && new Date(t.date) >= monthStart);
+            cats.forEach(cat => {
+                if (budgets[cat]) {
+                    const spent = monthData.filter(t => t.cat === cat).reduce((a,b) => a+b.amt, 0);
+                    if (spent > budgets[cat]) showToast(`⚠️ ${cat} budget exceeded!`, 'error');
+                }
+            });
+        }
+
+        function saveGoal() {
+            const name = document.getElementById('goal-name').value.trim();
+            const amt = parseFloat(document.getElementById('goal-amt').value);
+            if (!name || !amt) { showToast('Enter goal name and amount!', 'error'); return; }
+            localStorage.setItem(`sw_goal_${currentUserEmail}`, JSON.stringify({ name, amt }));
+            showToast('Goal set! 🎯', 'success');
+            loadSmartPage();
+        }
+
+        function shareWhatsApp() {
+            if (!currentUserEmail) return;
+            const now = new Date();
+            const weekStart = new Date(now); weekStart.setDate(now.getDate() - now.getDay()); weekStart.setHours(0,0,0,0);
+            const weekData = allTxs.filter(t => t.user === currentUserEmail && new Date(t.date) >= weekStart);
+            const inc = weekData.filter(t => t.cat === 'Income').reduce((a,b) => a+b.amt, 0);
+            const exp = weekData.filter(t => t.cat !== 'Income').reduce((a,b) => a+b.amt, 0);
+            const cats = ['Food','Transport','Bills','Shopping','Others'];
+            const breakdown = cats.map(cat => {
+                const amt = weekData.filter(t => t.cat === cat).reduce((a,b) => a+b.amt, 0);
+                return amt > 0 ? `  • ${cat}: ₹${amt.toFixed(0)}` : null;
+            }).filter(Boolean).join('\n');
+            const msg = `💰 *SpendWise Weekly Summary*\n\n📅 Week: ${weekStart.toDateString()}\n\n💚 Income: ₹${inc.toFixed(0)}\n🔴 Expenses: ₹${exp.toFixed(0)}\n💵 Balance: ₹${(inc-exp).toFixed(0)}\n\n📊 Breakdown:\n${breakdown || '  No expenses this week'}\n\n_Sent from SpendWise App_ 🚀`;
+            window.open(`https://wa.me/?text=${encodeURIComponent(msg)}`, '_blank');
+        }
+
+        function closeSMSHistory() {
+            document.getElementById('sms-history-modal').classList.add('hidden');
+            showPage('dashboard-page');
+        }
+
+    </script>
+</body>
+</html>

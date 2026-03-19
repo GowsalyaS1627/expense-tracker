@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SpendWise Pro</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #1a1a2e 0%, #2d3561 50%, #1f2544 100%); min-height: 100vh; color: #e2e8f0; }
+        .hidden { display: none !important; }
+        .card { background: linear-gradient(145deg, #252d4a, #2a3454); border-radius: 24px; padding: 20px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 10px 40px rgba(0,0,0,0.4); }
+        .btn-primary { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; transition: all 0.3s; }
+        .toggle-btn.active { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
+        input, select { background: rgba(42, 52, 84, 0.9) !important; border: 1px solid rgba(255,255,255,0.15) !important; color: white !important; border-radius: 12px !important; }
+        .loader { border: 2px solid rgba(255,255,255,0.1); border-top: 2px solid #667eea; border-radius: 50%; width: 14px; height: 14px; animation: spin 1s linear infinite; display: inline-block; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .toast { position: fixed; top: 20px; right: 20px; background: linear-gradient(145deg, #2a3454, #252d4a); border: 1px solid rgba(255,255,255,0.15); padding: 16px 20px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 9999; display: flex; align-items: center; gap: 12px; }
+        .toast.success { border-left: 4px solid #10b981; }
+        .toast.error { border-left: 4px solid #ef4444; }
+        .gradient-text { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .nav-btn.active { border: 2px solid #667eea !important; box-shadow: 0 0 20px rgba(102, 126, 234, 0.4); }
+        .sidebar { background: linear-gradient(180deg, #1a1a2e 0%, #16213e 100%); border-right: 1px solid rgba(255,255,255,0.1); }
+    </style>
+</head>
+<body>
+    <!-- Auth Page -->
+    <section id="auth-page" class="min-h-screen flex flex-col justify-center px-8">
+        <div class="text-center mb-10">
+            <h1 class="text-4xl font-black text-white">SpendWise</h1>
+            <p class="text-slate-500 mt-2 text-xs uppercase">Secure Finance Manager</p>
+        </div>
+        <form id="auth-form" class="space-y-4 max-w-sm mx-auto w-full">
+            <input type="text" id="auth-name" placeholder="Full Name" class="hidden w-full p-4 outline-none">
+            <input type="email" id="auth-email" placeholder="Email" class="w-full p-4 outline-none" required>
+            <input type="password" id="auth-master" placeholder="Recovery Key" class="hidden w-full p-4 outline-none">
+            <input type="password" id="auth-pass" placeholder="Password" class="w-full p-4 outline-none" required>
+            <button type="submit" id="auth-btn" class="w-full btn-primary p-4 rounded-2xl font-bold">Login</button>
+        </form>
+        <p class="text-center mt-8 text-sm text-slate-400">
+            <span>Don't have an account?</span>
+            <button onclick="toggleAuthMode()" class="text-blue-500 font-bold ml-1">Sign Up</button>
+        </p>
+    </section>
+
+    <!-- Dashboard with Sidebar -->
+    <section id="dashboard-page" class="hidden">
+        <!-- Left Sidebar -->
+        <div class="fixed left-0 top-0 h-full w-20 z-40 sidebar flex flex-col items-center py-6 gap-4">
+            <div class="w-12 h-12 rounded-xl flex items-center justify-center mb-4" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <span class="material-icons text-white">account_balance_wallet</span>
+            </div>
+            
+            <button onclick="showPage('dashboard-page')" class="nav-btn active w-14 h-14 rounded-xl flex flex-col items-center justify-center transition-all" style="background: linear-gradient(145deg, #2a3454, #252d4a); border: 1px solid rgba(255,255,255,0.1);">
+                <span class="material-icons text-blue-400">dashboard</span>
+                <span class="text-[7px] text-slate-500 mt-1">Home</span>
+            </button>
+            
+            <button onclick="showPage('add-page')" class="nav-btn w-14 h-14 rounded-xl flex flex-col items-center justify-center transition-all" style="background: linear-gradient(145deg, #2a3454, #252d4a); border: 1px solid rgba(255,255,255,0.1);">
+                <span class="material-icons text-purple-400">add_circle</span>
+                <span class="text-[7px] text-slate-500 mt-1">Add</span>
+            </button>
+            
+            <button onclick="showPage('predictions-page')" class="nav-btn w-14 h-14 rounded-xl flex flex-col items-center justify-center transition-all" style="background: linear-gradient(145deg, #2a3454, #252d4a); border: 1px solid rgba(255,255,255,0.1);">
+                <span class="material-icons text-pink-400">trending_up</span>
+                <span class="text-[7px] text-slate-500 mt-1">Predict</span>
+            </button>
+            
+            <button onclick="showPage('streaks-page')" class="nav-btn w-14 h-14 rounded-xl flex flex-col items-center justify-center transition-all" style="background: linear-gradient(145deg, #2a3454, #252d4a); border: 1px solid rgba(255,255,255,0.1);">
+                <span class="material-icons text-orange-400">local_fire_department</span>
+                <span class="text-[7px] text-slate-500 mt-1">Streak</span>
+            </button>
+            
+            <button onclick="showPage('sms-page')" class="nav-btn w-14 h-14 rounded-xl flex flex-col items-center justify-center transition-all" style="background: linear-gradient(145deg, #2a3454, #252d4a); border: 1px solid rgba(255,255,255,0.1);">
+                <span class="material-icons text-emerald-400">sms</span>
+                <span class="text-[7px] text-slate-500 mt-1">SMS</span>
+            </button>
+            
+            <div class="flex-1"></div>
+            
+            <button onclick="showPage('profile-page')" class="nav-btn w-14 h-14 rounded-xl flex flex-col items-center justify-center transition-all" style="background: linear-gradient(145deg, #2a3454, #252d4a); border: 1px solid rgba(255,255,255,0.1);">
+                <span class="material-icons text-slate-400">person</span>
+                <span class="text-[7px] text-slate-500 mt-1">Profile</span>
+            </button>
+        </div>
+
+        <!-- Main Content -->
+        <div class="ml-20">
+            <header class="p-6 sticky top-0 backdrop-blur-md z-30" style="background: rgba(26,26,46,0.85);">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <p class="text-[9px] font-bold uppercase text-slate-500">Welcome Back,</p>
+                        <h1 id="user-display-name" class="text-2xl font-bold gradient-text">User</h1>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-3">
+                    <div class="text-center p-3 rounded-xl card">
+                        <p class="text-[8px] text-slate-500 font-bold uppercase">Transactions</p>
+                        <h3 id="total-txs" class="text-xl font-bold text-blue-400">0</h3>
+                    </div>
+                    <div class="text-center p-3 rounded-xl card">
+                        <p class="text-[8px] text-slate-500 font-bold uppercase">Avg/Day</p>
+                        <h3 id="avg-daily" class="text-xl font-bold text-purple-400">₹0</h3>
+                    </div>
+                    <div class="text-center p-3 rounded-xl card">
+                        <p class="text-[8px] text-slate-500 font-bold uppercase">Savings</p>
+                        <h3 id="savings-rate" class="text-xl font-bold text-emerald-400">0%</h3>
+                    </div>
+                </div>
+            </header>
+
+            <main class="px-5 space-y-5 pb-10">
+                <div class="text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 24px; padding: 20px; box-shadow: 0 15px 45px rgba(102, 126, 234, 0.4);">
+                    <p class="text-blue-100 text-[9px] font-bold uppercase">Total Balance</p>
+                    <h2 id="total-balance" class="text-4xl font-bold mt-1">₹0.00</h2>
+                </div>
+
+                <div class="flex gap-4">
+                    <div class="flex-1 py-4 border-l-4 border-l-emerald-500 card">
+                        <p class="text-[8px] text-emerald-400 font-bold uppercase">Income</p>
+                        <h3 id="dash-income" class="text-xl font-bold text-emerald-300">₹0</h3>
+                    </div>
+                    <div class="flex-1 py-4 border-l-4 border-l-rose-500 card">
+                        <p class="text-[8px] text-rose-400 font-bold uppercase">Expenses</p>
+                        <h3 id="dash-expense" class="text-xl font-bold text-rose-300">₹0</h3>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3 class="text-[9px] font-bold text-slate-500 uppercase mb-4">Cash Flow</h3>
+                    <div style="height: 160px;"><canvas id="lineChart"></canvas></div>
+                </div>
+
+                <div id="tx-list" class="space-y-3"></div>
+            </main>
+        </div>
+    </section>
+
+    <!-- Profile Page -->
+    <section id="profile-page" class="hidden fixed inset-0 z-[100] p-6 overflow-y-auto" style="background: linear-gradient(135deg, #1a1a2e 0%, #2d3561 50%, #1f2544 100%);">
+        <div class="flex items-center justify-between mb-10">
+            <button onclick="showPage('dashboard-page')" class="w-10 h-10 flex items-center justify-center rounded-xl card">
+                <span class="material-icons text-white text-sm">arrow_back_ios_new</span>
+            </button>
+            <h2 class="text-xl font-bold gradient-text">Profile</h2>
+            <div class="w-10"></div>
+        </div>
+
+        <div class="max-w-md mx-auto space-y-5">
+            <div class="card text-center">
+                <div class="w-24 h-24 rounded-full mx-auto mb-4 flex items-center justify-center" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <span class="material-icons text-white text-5xl">person</span>
+                </div>
+                <h3 id="profile-name" class="text-2xl font-bold text-white mb-1">User</h3>
+                <p id="profile-email" class="text-sm text-slate-400">user@email.com</p>
+            </div>
+
+            <div class="card">
+                <h3 class="text-[9px] font-bold text-slate-500 uppercase mb-4">Stats</h3>
+                <div class="space-y-3">
+                    <div class="flex justify-between p-3 rounded-xl" style="background: rgba(255,255,255,0.02);">
+                        <span class="text-sm text-slate-400">Transactions</span>
+                        <span id="profile-total-txs" class="text-sm font-bold text-white">0</span>
+                    </div>
+                    <div class="flex justify-between p-3 rounded-xl" style="background: rgba(255,255,255,0.02);">
+                        <span class="text-sm text-slate-400">Income</span>
+                        <span id="profile-total-income" class="text-sm font-bold text-emerald-400">₹0</span>
+                    </div>
+                    <div class="flex justify-between p-3 rounded-xl" style="background: rgba(255,255,255,0.02);">
+                        <span class="text-sm text-slate-400">Expenses</span>
+                        <span id="profile-total-expense" class="text-sm font-bold text-rose-400">₹0</span>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="logoutUser()" class="w-full p-5 rounded-2xl font-bold text-white flex items-center justify-center gap-2" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);">
+                <span class="material-icons">logout</span>
+                <span>Logout</span>
+            </button>
+        </div>
+    </section>
+
+    <script>
+        let isSignup = false;
+        let currentUserEmail = localStorage.getItem('sw_user_email');
+        let users = JSON.parse(localStorage.getItem('sw_accounts')) || {};
+        let allTxs = JSON.parse(localStorage.getItem('sw_data')) || [];
+
+        function showToast(message, type = 'success') {
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            const icon = type === 'success' ? 'check_circle' : 'error';
+            const color = type === 'success' ? '#10b981' : '#ef4444';
+            toast.innerHTML = `<span class="material-icons" style="color: ${color};">${icon}</span><span style="color: #e2e8f0; font-weight: 600;">${message}</span>`;
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        }
+
+        function logoutUser() {
+            if(confirm('Logout?')) {
+                localStorage.removeItem('sw_user_email');
+                location.reload();
+            }
+        }
+
+        window.onload = () => {
+            if (currentUserEmail && users[currentUserEmail]) {
+                showPage('dashboard-page');
+            } else {
+                showPage('auth-page');
+            }
+        };
+
+        function toggleAuthMode() {
+            isSignup = !isSignup;
+            document.getElementById('auth-name').classList.toggle('hidden', !isSignup);
+            document.getElementById('auth-master').classList.toggle('hidden', !isSignup);
+            document.getElementById('auth-btn').innerText = isSignup ? "Sign Up" : "Login";
+        }
+
+        document.getElementById('auth-form').onsubmit = (e) => {
+            e.preventDefault();
+            const email = document.getElementById('auth-email').value;
+            const pass = document.getElementById('auth-pass').value;
+            if (isSignup) {
+                users[email] = { name: document.getElementById('auth-name').value || "User", pass, master: document.getElementById('auth-master').value };
+                localStorage.setItem('sw_accounts', JSON.stringify(users));
+                showToast('Account created!');
+                toggleAuthMode();
+            } else {
+                if (users[email] && users[email].pass === pass) {
+                    currentUserEmail = email;
+                    localStorage.setItem('sw_user_email', email);
+                    showPage('dashboard-page');
+                } else {
+                    showToast('Wrong credentials!', 'error');
+                }
+            }
+        };
+
+        function showPage(id) {
+            document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+            
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+            
+            if (id === 'dashboard-page') {
+                document.querySelectorAll('.nav-btn')[0].classList.add('active');
+                document.getElementById('user-display-name').innerText = users[currentUserEmail]?.name || 'User';
+            } else if (id === 'profile-page') {
+                loadProfileData();
+                document.querySelectorAll('.nav-btn')[5].classList.add('active');
+            }
+        }
+
+        function loadProfileData() {
+            if (!currentUserEmail) return;
+            const userData = allTxs.filter(t => t.user === currentUserEmail);
+            const inc = userData.filter(t => t.cat === 'Income').reduce((a,b)=>a+b.amt, 0);
+            const exp = userData.filter(t => t.cat !== 'Income').reduce((a,b)=>a+b.amt, 0);
+            
+            document.getElementById('profile-name').innerText = users[currentUserEmail]?.name || 'User';
+            document.getElementById('profile-email').innerText = currentUserEmail;
+            document.getElementById('profile-total-txs').innerText = userData.length;
+            document.getElementById('profile-total-income').innerText = `₹${inc.toFixed(2)}`;
+            document.getElementById('profile-total-expense').innerText = `₹${exp.toFixed(2)}`;
+        }
+    </script>
+</body>
+</html>

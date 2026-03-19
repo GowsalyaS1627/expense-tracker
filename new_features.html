@@ -1,0 +1,301 @@
+<!-- Add these sections before closing </body> tag in index.html -->
+
+<!-- Reminders Page -->
+<section id="reminders-page" class="hidden fixed inset-0 z-[100] p-6 overflow-y-auto" style="background: linear-gradient(135deg, #000000 0%, #1a1a2e 50%, #0f0f1e 100%);">
+    <div class="flex items-center justify-between mb-10">
+        <button onclick="showPage('dashboard-page')" class="w-10 h-10 flex items-center justify-center rounded-xl" style="background: linear-gradient(145deg, #1a1a2e, #16213e); border: 1px solid rgba(255,255,255,0.05);">
+            <span class="material-icons text-white text-sm">arrow_back_ios_new</span>
+        </button>
+        <h2 class="text-xl font-bold gradient-text tracking-tight">Payment Reminders</h2>
+        <button onclick="showAddReminder()" class="w-10 h-10 flex items-center justify-center rounded-xl" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <span class="material-icons text-white">add</span>
+        </button>
+    </div>
+
+    <div class="max-w-md mx-auto space-y-4" id="reminders-list"></div>
+
+    <!-- Add Reminder Modal -->
+    <div id="add-reminder-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-[200]">
+        <div class="max-w-md w-full mx-4 p-6 rounded-2xl" style="background: linear-gradient(145deg, #1a1a2e, #16213e); border: 1px solid rgba(255,255,255,0.05);">
+            <h3 class="text-lg font-bold text-white mb-4">Add Reminder</h3>
+            <div class="space-y-4">
+                <input type="text" id="reminder-title" placeholder="Bill Name (e.g., Electricity)" class="w-full p-4 rounded-xl bg-gray-800 border border-gray-700 text-white outline-none">
+                <input type="number" id="reminder-amt" placeholder="Amount" class="w-full p-4 rounded-xl bg-gray-800 border border-gray-700 text-white outline-none">
+                <input type="date" id="reminder-date" class="w-full p-4 rounded-xl bg-gray-800 border border-gray-700 text-white outline-none">
+                <div class="flex gap-3">
+                    <button onclick="saveReminder()" class="flex-1 p-4 rounded-xl font-bold text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">Save</button>
+                    <button onclick="closeAddReminder()" class="flex-1 p-4 rounded-xl font-bold text-slate-400 bg-gray-800">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Split Expenses Page -->
+<section id="split-page" class="hidden fixed inset-0 z-[100] p-6 overflow-y-auto" style="background: linear-gradient(135deg, #000000 0%, #1a1a2e 50%, #0f0f1e 100%);">
+    <div class="flex items-center justify-between mb-10">
+        <button onclick="showPage('dashboard-page')" class="w-10 h-10 flex items-center justify-center rounded-xl" style="background: linear-gradient(145deg, #1a1a2e, #16213e); border: 1px solid rgba(255,255,255,0.05);">
+            <span class="material-icons text-white text-sm">arrow_back_ios_new</span>
+        </button>
+        <h2 class="text-xl font-bold gradient-text tracking-tight">Split Expenses</h2>
+        <button onclick="showAddSplit()" class="w-10 h-10 flex items-center justify-center rounded-xl" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+            <span class="material-icons text-white">add</span>
+        </button>
+    </div>
+
+    <div class="max-w-md mx-auto space-y-4" id="splits-list"></div>
+
+    <!-- Add Split Modal -->
+    <div id="add-split-modal" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-[200]">
+        <div class="max-w-md w-full mx-4 p-6 rounded-2xl" style="background: linear-gradient(145deg, #1a1a2e, #16213e); border: 1px solid rgba(255,255,255,0.05);">
+            <h3 class="text-lg font-bold text-white mb-4">Split Expense</h3>
+            <div class="space-y-4">
+                <input type="text" id="split-note" placeholder="Description (e.g., Dinner with friends)" class="w-full p-4 rounded-xl bg-gray-800 border border-gray-700 text-white outline-none">
+                <input type="number" id="split-total" placeholder="Total Amount" class="w-full p-4 rounded-xl bg-gray-800 border border-gray-700 text-white outline-none">
+                <input type="text" id="split-with" placeholder="Split with (e.g., John, Sarah)" class="w-full p-4 rounded-xl bg-gray-800 border border-gray-700 text-white outline-none">
+                <input type="number" id="split-share" placeholder="Your Share" class="w-full p-4 rounded-xl bg-gray-800 border border-gray-700 text-white outline-none">
+                <input type="date" id="split-date" class="w-full p-4 rounded-xl bg-gray-800 border border-gray-700 text-white outline-none">
+                <div class="flex gap-3">
+                    <button onclick="saveSplit()" class="flex-1 p-4 rounded-xl font-bold text-white" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">Save</button>
+                    <button onclick="closeAddSplit()" class="flex-1 p-4 rounded-xl font-bold text-slate-400 bg-gray-800">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Add these JavaScript functions before closing </script> tag -->
+
+<script>
+// Reminders Functions
+async function loadReminders() {
+    try {
+        const response = await fetch(`/get_reminders/${currentUserEmail}`);
+        if (response.ok) {
+            const reminders = await response.json();
+            renderReminders(reminders);
+        }
+    } catch (err) {
+        console.log("Error loading reminders");
+    }
+}
+
+function renderReminders(reminders) {
+    const html = reminders.map(r => `
+        <div class="p-4 rounded-2xl ${r.status === 'paid' ? 'opacity-50' : ''}" style="background: linear-gradient(145deg, #1a1a2e, #16213e); border: 1px solid rgba(255,255,255,0.05);">
+            <div class="flex items-center justify-between">
+                <div class="flex-1">
+                    <h3 class="text-white font-bold">${r.title}</h3>
+                    <p class="text-sm text-slate-400">₹${r.amt} • Due: ${r.due_date}</p>
+                </div>
+                ${r.status === 'pending' ? `<button onclick="markReminderPaid(${r.id})" class="px-4 py-2 rounded-lg text-xs font-bold text-white" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">Mark Paid</button>` : `<span class="text-emerald-400 text-sm font-bold">✓ Paid</span>`}
+            </div>
+        </div>
+    `).join('');
+    document.getElementById('reminders-list').innerHTML = html || '<p class="text-center text-slate-500">No reminders yet</p>';
+}
+
+function showAddReminder() {
+    document.getElementById('add-reminder-modal').classList.remove('hidden');
+    document.getElementById('reminder-date').valueAsDate = new Date();
+}
+
+function closeAddReminder() {
+    document.getElementById('add-reminder-modal').classList.add('hidden');
+}
+
+async function saveReminder() {
+    const title = document.getElementById('reminder-title').value;
+    const amt = parseFloat(document.getElementById('reminder-amt').value);
+    const due_date = document.getElementById('reminder-date').value;
+
+    if (!title || !amt || !due_date) { showToast('Fill all fields!', 'error'); return; }
+
+    try {
+        const response = await fetch('/add_reminder', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user: currentUserEmail, title, amt, due_date })
+        });
+
+        if (response.ok) {
+            showToast('Reminder added!', 'success');
+            closeAddReminder();
+            loadReminders();
+            document.getElementById('reminder-title').value = '';
+            document.getElementById('reminder-amt').value = '';
+        }
+    } catch (err) {
+        showToast('Error adding reminder', 'error');
+    }
+}
+
+async function markReminderPaid(id) {
+    try {
+        const response = await fetch(`/mark_reminder/${id}`, { method: 'PUT' });
+        if (response.ok) {
+            showToast('Marked as paid!', 'success');
+            loadReminders();
+        }
+    } catch (err) {
+        showToast('Error updating reminder', 'error');
+    }
+}
+
+// Split Expenses Functions
+async function loadSplits() {
+    try {
+        const response = await fetch(`/get_splits/${currentUserEmail}`);
+        if (response.ok) {
+            const splits = await response.json();
+            renderSplits(splits);
+        }
+    } catch (err) {
+        console.log("Error loading splits");
+    }
+}
+
+function renderSplits(splits) {
+    const html = splits.map(s => `
+        <div class="p-4 rounded-2xl" style="background: linear-gradient(145deg, #1a1a2e, #16213e); border: 1px solid rgba(255,255,255,0.05);">
+            <div class="flex items-center justify-between mb-2">
+                <h3 class="text-white font-bold">${s.note}</h3>
+                <span class="text-xs text-slate-500">${s.date}</span>
+            </div>
+            <div class="flex items-center justify-between text-sm">
+                <p class="text-slate-400">Total: ₹${s.total_amt}</p>
+                <p class="text-blue-400 font-bold">Your Share: ₹${s.your_share}</p>
+            </div>
+            <p class="text-xs text-slate-500 mt-2">Split with: ${s.split_with}</p>
+        </div>
+    `).join('');
+    document.getElementById('splits-list').innerHTML = html || '<p class="text-center text-slate-500">No split expenses yet</p>';
+}
+
+function showAddSplit() {
+    document.getElementById('add-split-modal').classList.remove('hidden');
+    document.getElementById('split-date').valueAsDate = new Date();
+}
+
+function closeAddSplit() {
+    document.getElementById('add-split-modal').classList.add('hidden');
+}
+
+async function saveSplit() {
+    const note = document.getElementById('split-note').value;
+    const total_amt = parseFloat(document.getElementById('split-total').value);
+    const split_with = document.getElementById('split-with').value;
+    const your_share = parseFloat(document.getElementById('split-share').value);
+    const date = document.getElementById('split-date').value;
+
+    if (!note || !total_amt || !split_with || !your_share || !date) { showToast('Fill all fields!', 'error'); return; }
+
+    try {
+        const response = await fetch('/add_split', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ user: currentUserEmail, note, total_amt, split_with, your_share, date })
+        });
+
+        if (response.ok) {
+            showToast('Split expense added!', 'success');
+            closeAddSplit();
+            loadSplits();
+            document.getElementById('split-note').value = '';
+            document.getElementById('split-total').value = '';
+            document.getElementById('split-with').value = '';
+            document.getElementById('split-share').value = '';
+        }
+    } catch (err) {
+        showToast('Error adding split', 'error');
+    }
+}
+
+// AI Insights Functions
+async function loadInsights() {
+    try {
+        const response = await fetch(`/get_insights/${currentUserEmail}`);
+        if (response.ok) {
+            const data = await response.json();
+            renderInsights(data.insights);
+            if (data.anomalies && data.anomalies.length > 0) {
+                showAnomalyAlerts(data.anomalies);
+            }
+        }
+    } catch (err) {
+        console.log("Error loading insights");
+    }
+}
+
+function showAnomalyAlerts(anomalies) {
+    anomalies.forEach((anomaly, index) => {
+        setTimeout(() => {
+            const alert = document.createElement('div');
+            alert.className = 'toast error';
+            alert.style.top = `${20 + (index * 80)}px`;
+            alert.innerHTML = `
+                <span class="material-icons" style="color: #ef4444;">warning</span>
+                <div>
+                    <p style="color: #e2e8f0; font-weight: 600; font-size: 12px;">${anomaly.message}</p>
+                    <p style="color: #94a3b8; font-size: 10px; margin-top: 4px;">This is ${((anomaly.amount / anomaly.avg) * 100 - 100).toFixed(0)}% higher than usual</p>
+                </div>
+            `;
+            document.body.appendChild(alert);
+            setTimeout(() => alert.remove(), 8000);
+        }, index * 500);
+    });
+}
+
+function renderInsights(insights) {
+    const html = insights.map(insight => `
+        <div class="p-4 rounded-xl mb-3" style="background: linear-gradient(145deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.05)); border: 1px solid rgba(102, 126, 234, 0.2);">
+            <p class="text-sm text-blue-300"><span class="material-icons text-xs mr-2" style="vertical-align: middle;">lightbulb</span>${insight}</p>
+        </div>
+    `).join('');
+    
+    // Add to dashboard after balance card
+    const insightsSection = `
+        <div class="card">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="text-[9px] font-bold text-slate-500 uppercase tracking-widest">AI Insights</h3>
+                <span class="material-icons text-blue-400 text-sm">psychology</span>
+            </div>
+            ${html || '<p class="text-slate-500 text-sm">No insights available yet</p>'}
+            <div class="mt-3 p-3 rounded-lg" style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2);">
+                <p class="text-xs text-rose-300"><span class="material-icons text-xs mr-1" style="vertical-align: middle;">shield</span>Anomaly detection active - You'll be alerted for unusual spending</p>
+            </div>
+        </div>
+    `;
+    
+    // Insert after income/expense cards
+    const main = document.querySelector('#dashboard-page main');
+    const existingInsights = document.getElementById('ai-insights-section');
+    if (existingInsights) {
+        existingInsights.innerHTML = insightsSection;
+    } else {
+        const div = document.createElement('div');
+        div.id = 'ai-insights-section';
+        div.innerHTML = insightsSection;
+        main.insertBefore(div, main.children[2]);
+    }
+}
+
+// Update showPage function to load new features
+const originalShowPage = showPage;
+showPage = function(id) {
+    originalShowPage(id);
+    if (id === 'reminders-page') loadReminders();
+    if (id === 'split-page') loadSplits();
+    if (id === 'dashboard-page') loadInsights();
+};
+</script>
+
+<!-- Add navigation buttons to dashboard (add after the + button) -->
+<div class="fixed bottom-10 left-6 flex flex-col gap-3 z-50">
+    <button onclick="showPage('reminders-page')" class="w-14 h-14 rounded-2xl shadow-2xl flex items-center justify-center" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); box-shadow: 0 10px 40px rgba(245, 158, 11, 0.5);">
+        <span class="material-icons text-2xl">notifications</span>
+    </button>
+    <button onclick="showPage('split-page')" class="w-14 h-14 rounded-2xl shadow-2xl flex items-center justify-center" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); box-shadow: 0 10px 40px rgba(16, 185, 129, 0.5);">
+        <span class="material-icons text-2xl">group</span>
+    </button>
+</div>
