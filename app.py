@@ -457,7 +457,10 @@ def get_sms_history(email):
     conn.close()
     return jsonify([{"id": r[0], "amount": r[1], "type": r[2], "date": r[3]} for r in rows])
 
-if __name__ == '__main__':
-    app.run(debug=True)
 
 
+import os
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
